@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GWM CSI Report Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        :root {
+            --gwm-red: #D31145;
+            --text-dark: #333333;
+            --text-gray: #666666;
+            --bg-light: #F8F9FA;
+            --border-color: #E0E0E0;
+            --bar-blue: #2A8CFF;
+            --line-green: #008000;
+            --sage-green: #BAD0C2;
+            --surface: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .hidden { display: none !important; }
+
+        /* ============================
+           ส่วนของหน้า Login ใหม่ (V10) 
+        ============================ */
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f4f5f7;
+        }
+        .login-card {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 28rem;
+            position: relative;
+            box-sizing: border-box;
+        }
+        .login-logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .login-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            text-align: center;
+            margin: 0 0 1.5rem 0;
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            text-align: center;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .input-group {
+            margin-bottom: 1rem;
+        }
+        .input-group label {
+            display: block;
+            color: #374151;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        .input-group input[type="text"],
+        .input-group input[type="password"] {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-group input:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .checkbox-group input {
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+            accent-color: #059669;
+        }
+        .checkbox-group label {
+            margin-left: 0.5rem;
+            font-size: 0.875rem;
+            color: #374151;
+            cursor: pointer;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 0.625rem;
+            background-color: #b2c8b8;
+            color: #1f2937;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 0.875rem;
+        }
+        .login-btn:hover {
+            background-color: #a1b8a7;
+        }
+        .login-btn:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+            color: #6b7280;
+        }
+
+        /* ============================
+           Layout with Sticky Sidebar
+        ============================ */
+        #dashboardSection {
+            display: flex;
+            min-height: 100vh;
+            background-color: var(--bg-light);
+            box-sizing: border-box;
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: var(--surface);
+            border-right: 1px solid var(--border-color);
+            padding: 20px 15px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: var(--bg-light);
+            color: var(--gwm-red);
+        }
+
+        .sidebar-menu li.active a {
+            background-color: var(--sage-green);
+            color: var(--text-dark);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px 40px;
+            background-color: #ffffff;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .title-area { text-align: center; flex-grow: 1; }
+        .title-area h1 { margin: 0; font-size: 28px; font-weight: normal; }
+        .title-area h2 { margin: 5px 0 0 0; font-size: 32px; font-weight: bold; }
+        .date-area { text-align: right; font-size: 14px; color: var(--text-gray); display: flex; gap: 30px; align-items: center;}
+        .date-box strong { display: block; color: var(--text-dark); font-size: 16px; }
+        
+        .logout-btn { padding: 8px 16px; background-color: #f1f3f4; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        .logout-btn:hover { background-color: #e0e0e0; }
+
+        .filter-section {
+            background-color: var(--bg-light); padding: 15px 25px; border-radius: 8px;
+            display: flex; gap: 20px; margin-bottom: 30px; border: 1px solid var(--border-color); align-items: center;
+        }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .filter-group label { font-weight: bold; font-size: 14px; }
+        .filter-group select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; min-width: 200px; }
+
+        .kpi-container { display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center; }
+        .kpi-box { flex: 1; }
+        .kpi-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+        .kpi-value { font-size: 36px; font-weight: normal; }
+
+        .chart-container { height: 350px; width: 100%; margin-bottom: 40px; position: relative; }
+
+        .bottom-section { display: grid; grid-template-columns: 1fr 1fr 2.5fr; gap: 30px; margin-bottom: 40px; }
+        .table-wrapper h3 { margin: 0 0 10px 0; font-size: 16px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 8px; border-bottom: 1px solid var(--border-color); text-align: right; }
+        th { font-weight: bold; }
+        th:first-child, td:first-child { text-align: left; }
+        
+        .text-green { color: #00a650; font-weight: bold; }
+        .text-red { color: #e53935; font-weight: bold; }
+
+        /* ============================
+           ส่วนของตาราง Raw Data
+        ============================ */
+        .raw-data-section {
+            background-color: var(--surface); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 20px; margin-top: 30px;
+        }
+        .raw-data-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .raw-data-header h3 { margin: 0; font-size: 18px; color: var(--text-dark); }
+        .export-btn {
+            padding: 8px 16px; background-color: #217346; color: white; border: none; border-radius: 6px; 
+            font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;
+        }
+        .export-btn:hover { background-color: #1a5c38; }
+        .export-btn:disabled { background-color: #a0c4b2; cursor: not-allowed; }
+
+        .raw-table-container {
+            width: 100%;
+            max-height: 400px;
+            overflow-y: auto; 
+            overflow-x: auto; 
+            border: 1px solid var(--border-color);
+        }
+        .raw-table {
+            width: max-content; 
+            min-width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            white-space: nowrap; 
+        }
+        .raw-table th {
+            position: sticky;
+            top: 0; 
+            background-color: var(--sage-green);
+            color: var(--text-dark);
+            padding: 10px;
+            border-bottom: 2px solid #8ba898;
+            z-index: 2;
+            text-align: left;
+        }
+        .raw-table td {
+            padding: 8px 10px; border-bottom: 1px solid var(--border-color); text-align: left;
+        }
+        .raw-table tr:hover { background-color: #f1f3f4; }
+
+        /* Section Styling สำหรับแต่ละ Tab */
+        .tab-section {
+            display: none;
+            padding-top: 10px;
+        }
+        .tab-section.active {
+            display: block;
+        }
+        .placeholder-box {
+            background-color: var(--bg-light);
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. หน้า Login ใหม่ (V10 Style) -->
+    <div id="loginSection" class="login-wrapper">
+        <div class="login-card">
+            <div class="login-logo">
+                <img src="image_1d197f.png" alt="GWM Logo" style="height: 50px; object-fit: contain;">
+            </div>
+            <h1 class="login-title">Partner Portal Login</h1>
+            
+            <div id="error-message" class="error-message">เกิดข้อผิดพลาดในการเชื่อมต่อระบบ Login</div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label for="username">User Name (Store Name)</label>
+                    <input type="text" id="username" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember">
+                    <label for="remember">Keep me signed in</label>
+                </div>
+
+                <button type="submit" id="submitBtn" class="login-btn">เข้าสู่ระบบ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. หน้า Dashboard (ซ่อนไว้ก่อนจนกว่าจะ Login สำเร็จ) -->
+    <div id="dashboardSection" class="hidden">
+        <!-- Sidebar ด้านซ้าย วิ่งตาม scroll (Sticky) -->
+        <nav class="sidebar">
+            <div class="sidebar-brand">
+                <img src="image_1d197f.png" alt="GWM Logo" style="height: 200px; width: 100%; object-fit: contain;">
+            </div>
+            <ul class="sidebar-menu">
+                <li class="active" data-tab="summary"><a href="#summary" onclick="switchTab('summary', event)">🏠 Summary</a></li>
+                <li data-tab="csi"><a href="#csi" onclick="switchTab('csi', event)">📊 CSI</a></li>
+                <li data-tab="part"><a href="#part" onclick="switchTab('part', event)">🔩 Part purchase</a></li>
+                <li data-tab="accessory"><a href="#accessory" onclick="switchTab('accessory', event)">✨ Accessory purchase</a></li>
+                <li data-tab="repair"><a href="#repair" onclick="switchTab('repair', event)">🔧 Repair order</a></li>
+                <li data-tab="revenue"><a href="#revenue" onclick="switchTab('revenue', event)">💰 Revenue</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="logout()">ออกจากระบบ</button>
+            </div>
+        </nav>
+
+        <!-- Main Content ด้านขวา -->
+        <main class="main-content">
+            <div class="header-container">
+                <div class="title-area">
+                    <h1 id="displayStoreName">กำลังโหลดข้อมูล...</h1>
+                    <h2 id="pageTitle">CSI Report</h2>
+                </div>
+                <div class="date-area">
+                    <div class="date-box">
+                        <strong id="displayUpdateDate">--</strong> Update as of
+                    </div>
+                    <div class="date-box">
+                        <strong id="displayReportDate">--</strong> Report date
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label for="storeFilter">Partner Store:</label>
+                    <select id="storeFilter" disabled>
+                        <option value="">-- กำลังดึงข้อมูล... --</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="monthFilterGroup">
+                    <label for="monthFilter">Month:</label>
+                    <select id="monthFilter" disabled>
+                        <option value="">-- แสดงทุกเดือน --</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="quarterFilterGroup" style="display: none;">
+                    <label for="quarterFilter">Quarter:</label>
+                    <select id="quarterFilter">
+                        <option value="">-- All Quarters --</option>
+                        <option value="Q1">Q1 (Jan-Mar)</option>
+                        <option value="Q2">Q2 (Apr-Jun)</option>
+                        <option value="Q3">Q3 (Jul-Sep)</option>
+                        <option value="Q4">Q4 (Oct-Dec)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- TAB 0: Summary -->
+            <div id="section-summary" class="tab-section active">
+                <h3 style="margin-top:0; margin-bottom: 20px;">Overall Performance Summary (YTD)</h3>
+                <div class="kpi-container" style="display: flex; flex-wrap: wrap; gap: 20px;">
+                    <div class="kpi-box" style="flex: 1 1 45%; background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div class="kpi-title" style="color: var(--text-gray);">Average CSI Score</div>
+                        <div class="kpi-value" id="kpiSumCSI" style="color: #2A8CFF; font-weight: bold; margin-top: 10px;">--%</div>
+                    </div>
+                    <div class="kpi-box" style="flex: 1 1 45%; background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div class="kpi-title" style="color: var(--text-gray);">Average NPS Score</div>
+                        <div class="kpi-value" id="kpiSumNPS" style="color: #00a650; font-weight: bold; margin-top: 10px;">--%</div>
+                    </div>
+                    <div class="kpi-box" style="flex: 1 1 45%; background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div class="kpi-title" style="color: var(--text-gray);">Total Part Purchase (THB)</div>
+                        <div class="kpi-value" id="kpiSumPart" style="color: #e53935; font-weight: bold; margin-top: 10px;">--</div>
+                    </div>
+                    <div class="kpi-box" style="flex: 1 1 45%; background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div class="kpi-title" style="color: var(--text-gray);">Total Accessory Purchase (THB)</div>
+                        <div class="kpi-value" id="kpiSumAcc" style="color: #f57c00; font-weight: bold; margin-top: 10px;">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 1: CSI -->
+            <div id="section-csi" class="tab-section">
+                <div class="kpi-container">
+                    <div class="kpi-box"><div class="kpi-title">CSI Score (Avg)</div><div class="kpi-value" id="kpiCSI">--%</div></div>
+                    <div class="kpi-box"><div class="kpi-title">NPS Score (Avg)</div><div class="kpi-value" id="kpiNPS">--%</div></div>
+                    <div class="kpi-box"><div class="kpi-title">Total Records</div><div class="kpi-value" id="kpiSample">--</div></div>
+                </div>
+
+                <div class="chart-container"><canvas id="csiChart"></canvas></div>
+
+                <div class="bottom-section">
+                    <div class="table-wrapper">
+                        <h3>%CSI Top 5 Partners</h3>
+                        <table id="tableTop"><thead><tr><th>Store Name</th><th>CSI Score</th></tr></thead><tbody></tbody></table>
+                    </div>
+                    <div class="table-wrapper">
+                        <h3>%CSI Bottom 5 Partners</h3>
+                        <table id="tableBottom"><thead><tr><th>Store Name</th><th>CSI Score</th></tr></thead><tbody></tbody></table>
+                    </div>
+                    <div class="table-wrapper">
+                        <h3>Monthly Details</h3>
+                        <table id="tableDetail">
+                            <thead>
+                                <tr><th>Month</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th><th>Q6</th><th>Q7</th><th>Q8</th><th>CSI</th><th>NPS</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="raw-data-section">
+                    <div class="raw-data-header">
+                        <h3>CSI Raw Data</h3>
+                        <button id="btnExportExcel" class="export-btn" onclick="exportToExcel()" disabled>
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/></svg>
+                            Export Excel
+                        </button>
+                    </div>
+                    <div class="raw-table-container">
+                        <table id="rawDataTable" class="raw-table">
+                            <thead>
+                                <tr>
+                                    <th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Sender</th>
+                                    <th>Repair Order</th><th>Repair Item Name</th>
+                                    <th>Q1</th><th>Q1 Comment</th><th>Q2</th><th>Q2 Comment</th>
+                                    <th>Q3</th><th>Q3 Comment</th><th>Q4</th><th>Q4 Comment</th>
+                                    <th>Q5</th><th>Q5 Comment</th><th>Q6</th><th>Q6 Comment</th>
+                                    <th>Q7</th><th>Q7 Comment</th><th>Q8</th><th>Q8 Comment</th>
+                                    <th>Q9</th><th>Q9 Comment</th><th>Other Comment</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rawTableBody">
+                                <tr><td colspan="25" style="text-align:center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Part purchase -->
+            <div id="section-part" class="tab-section">
+                <h3 style="margin-top:0; margin-bottom: 20px;">Part purchase by month</h3>
+                <div class="kpi-container" id="partKpiContainer" style="display: flex;">
+                    <div class="kpi-box"><div class="kpi-title">Total Target</div><div class="kpi-value" id="kpiPartTarget" style="color: #e53935;">--</div></div>
+                    <div class="kpi-box"><div class="kpi-title">Total Purchase</div><div class="kpi-value" id="kpiPartPurchase" style="color: #2A8CFF;">--</div></div>
+                    <div class="kpi-box"><div class="kpi-title">% Achieved</div><div class="kpi-value" id="kpiPartAchieved" style="color: #00a650;">--</div></div>
+                </div>
+                <!-- เพิ่มข้อความแจ้งเตือน Error สำหรับ Part ตรงนี้ -->
+                <div id="partErrorMsg" style="color: #D31145; background-color:#ffe6e6; border-radius:8px; padding: 15px; margin-bottom:20px; font-weight: bold; display: none;"></div>
+                
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="partPurchaseChart"></canvas>
+                </div>
+            </div>
+
+            <!-- TAB 3: Accessory purchase -->
+            <div id="section-accessory" class="tab-section">
+                <h3 style="margin-top:0; margin-bottom: 20px;">Accessory purchase by month</h3>
+                <div class="kpi-container" id="accKpiContainer" style="display: flex;">
+                    <div class="kpi-box"><div class="kpi-title">Total Purchase</div><div class="kpi-value" id="kpiAccPurchase" style="color: #2A8CFF;">--</div></div>
+                </div>
+                <!-- เพิ่มข้อความแจ้งเตือน Error สำหรับ Accessory -->
+                <div id="accErrorMsg" style="color: #D31145; background-color:#ffe6e6; border-radius:8px; padding: 15px; margin-bottom:20px; font-weight: bold; display: none;"></div>
+                
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="accPurchaseChart"></canvas>
+                </div>
+            </div>
+
+            <!-- TAB 4: Repair order -->
+            <div id="section-repair" class="tab-section">
+                <div class="placeholder-box">
+                    🔧 ส่วนเนื้อหา Repair order (กำลังพัฒนา...)
+                </div>
+            </div>
+
+            <!-- TAB 5: Revenue -->
+            <div id="section-revenue" class="tab-section">
+                <div class="placeholder-box">
+                    💰 ส่วนเนื้อหา Revenue (กำลังพัฒนา...)
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Register ChartDataLabels plugin
+        Chart.register(ChartDataLabels);
+
+        // ==========================================
+        // ตั้งค่าลิงก์ API 
+        // ==========================================
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwZw3iG80U7mB8dZEPEFbOUFqM6CdUib0Ko6kSlorzsyDMrUx2933Lt7dTExiGrG9CMQ/exec";
+        
+        const API_URL_SUMMARY = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/28/workflows/30fc684f112a41e3935e678789ef3885/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=MIckOhS_-ClPmAw7HO-wJ26wR4DrrvQZWrHRGXoebqY';
+        const API_URL_RAW = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/08/workflows/9362c5f22cfc43c88fdaa61ed428a017/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RmLH9lpb8tZlJwQrdU-NQofI_26epheciBnc2znxC8c';
+        const API_URL_PART = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/f4fde94178c4468182357f2353194bcf/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5PBxW_j_vbO7ciGvYSU7mcn3fPBJpslV3KQRsx_J3rk';
+        const API_URL_ACC = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/04/workflows/011d94fbc95c4d2aab0f2db2fe5781f7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fPhWSHaabPJMx0CciFamE3kabOQhWW7zG6e92PkXpLc';
+
+        let loggedInUser = "";
+        let isAdmin = false;
+
+        window.onload = function() {
+            if (localStorage.getItem("gwm_logged_in") === "true") {
+                loggedInUser = localStorage.getItem("gwm_user");
+                isAdmin = (localStorage.getItem("gwm_is_admin") === "true");
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashboardSection').classList.remove('hidden');
+                fetchDashboardData();
+            } else {
+                document.getElementById('dashboardSection').classList.add('hidden');
+                document.getElementById('loginSection').classList.remove('hidden');
+            }
+        };
+
+        // ==========================================
+        // ระบบ Login ด้วย Google Apps Script
+        // ==========================================
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+            const keepSignedIn = document.getElementById('remember').checked;
+            const errorMsg = document.getElementById('error-message');
+            const submitBtn = document.getElementById('submitBtn');
+
+            errorMsg.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'กำลังตรวจสอบ...';
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ username: usernameInput, password: passwordInput }),
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    loggedInUser = result.username || usernameInput;
+                    isAdmin = (loggedInUser.toLowerCase() === "admin");
+
+                    if (keepSignedIn) {
+                        localStorage.setItem("gwm_logged_in", "true");
+                        localStorage.setItem("gwm_user", loggedInUser);
+                        localStorage.setItem("gwm_is_admin", isAdmin);
+                    }
+
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('dashboardSection').classList.remove('hidden');
+                    
+                    // เมื่อ Login สำเร็จ ให้ดึงข้อมูล Dashboard
+                    fetchDashboardData();
+                } else {
+                    errorMsg.textContent = result.message || "User Name หรือ Password ไม่ถูกต้อง";
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMsg.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อระบบ Login";
+                errorMsg.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'เข้าสู่ระบบ';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("gwm_logged_in");
+            localStorage.removeItem("gwm_user");
+            localStorage.removeItem("gwm_is_admin");
+            loggedInUser = "";
+            isAdmin = false;
+            
+            document.getElementById('username').value = "";
+            document.getElementById('password').value = "";
+            
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabId, event) {
+            if (event) event.preventDefault();
+            
+            document.querySelectorAll('.sidebar-menu li').forEach(li => {
+                li.classList.remove('active');
+            });
+            const targetLi = document.querySelector(`.sidebar-menu li[data-tab="${tabId}"]`);
+            if (targetLi) targetLi.classList.add('active');
+
+            document.querySelectorAll('.tab-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            const targetSec = document.getElementById(`section-${tabId}`);
+            if (targetSec) targetSec.classList.add('active');
+
+            const titles = {
+                'summary': 'Overall Summary',
+                'csi': 'CSI Report',
+                'part': 'Part Purchase Report',
+                'accessory': 'Accessory Purchase Report',
+                'repair': 'Repair Order Report',
+                'revenue': 'Revenue Report'
+            };
+            document.getElementById('pageTitle').textContent = titles[tabId] || 'Report';
+
+            const monthGroup = document.getElementById('monthFilterGroup');
+            const quarterGroup = document.getElementById('quarterFilterGroup');
+            if (tabId === 'csi' || tabId === 'repair' || tabId === 'revenue') {
+                if(monthGroup) monthGroup.style.display = 'flex';
+                if(quarterGroup) quarterGroup.style.display = 'none';
+            } else if (tabId === 'part' || tabId === 'accessory') {
+                if(monthGroup) monthGroup.style.display = 'none';
+                if(quarterGroup) quarterGroup.style.display = 'flex';
+            } else if (tabId === 'summary') {
+                if(monthGroup) monthGroup.style.display = 'none';
+                if(quarterGroup) quarterGroup.style.display = 'none';
+            } else {
+                if(monthGroup) monthGroup.style.display = 'none';
+                if(quarterGroup) quarterGroup.style.display = 'none';
+            }
+        }
+
+        const COL_STORE = 'PS_Information[PS_Store]';
+        const COL_MONTH = 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Month]';
+        const COL_MONTH_NO = 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[MonthNo]';
+        const COL_CSI = '[TTL_CSI_Score]';
+        const COL_NPS = '[Q9_score]'; 
+        const COL_Q = ['[Q1_score]','[Q2_score]','[Q3_score]','[Q4_score]','[Q5_score]','[Q6_score]','[Q7_score]','[Q8_score]'];
+
+        let rawSummaryData = []; 
+        let rawCsiTableData = []; 
+        let rawPartData = []; 
+        let rawAccData = [];
+        let currentFilteredRawData = []; 
+        
+        let csiChartInstance = null;
+        let partChartInstance = null;
+        let accChartInstance = null;
+
+        const d = new Date();
+        const dateStr = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'2-digit' }).replace(/ /g, '-');
+        document.getElementById('displayUpdateDate').textContent = dateStr;
+        document.getElementById('displayReportDate').textContent = dateStr;
+
+        function parseResponse(text) {
+            try {
+                const jsonData = JSON.parse(text);
+                if(Array.isArray(jsonData)) return jsonData;
+            } catch(e) {}
+            
+            let parsed = [];
+            Papa.parse(text, {
+                header: true, dynamicTyping: true, skipEmptyLines: true,
+                complete: function(results) { parsed = results.data; }
+            });
+            return parsed;
+        }
+
+        function fetchDashboardData() {
+            const getOpts = { method: 'GET' };
+
+            const p1 = fetch(API_URL_SUMMARY, getOpts)
+                        .then(r => { if (!r.ok) throw new Error("Summary API Error"); return r.text(); })
+                        .then(t => { rawSummaryData = parseResponse(t); })
+                        .catch(e => { console.error("Summary error:", e); });
+                        
+            const p2 = fetch(API_URL_RAW, getOpts)
+                        .then(r => { if (!r.ok) throw new Error("Raw API Error"); return r.text(); })
+                        .then(t => { rawCsiTableData = parseResponse(t); })
+                        .catch(e => { console.warn("Raw Data fetch failed: ", e); });
+
+            const p3 = fetch(API_URL_PART, getOpts)
+                        .then(r => { if (!r.ok) throw new Error("Part API Error"); return r.text(); })
+                        .then(t => { rawPartData = parseResponse(t); })
+                        .catch(e => {
+                            console.warn("Part Data fetch failed: ", e);
+                            const errDiv = document.getElementById('partErrorMsg');
+                            if(errDiv) {
+                                errDiv.innerHTML = "ดึงข้อมูล Part Purchase ไม่สำเร็จ!<br>1. อย่าลืมใส่ <b>Access-Control-Allow-Origin: *</b> ในกล่อง Response ของ Flow ใหม่<br>2. นำตัวแปร File Content ไปใส่ในช่อง Body ด้วยครับ";
+                                errDiv.style.display = 'block';
+                            }
+                        });
+
+            const p4 = fetch(API_URL_ACC, getOpts)
+                        .then(r => { if (!r.ok) throw new Error("Accessory API Error"); return r.text(); })
+                        .then(t => { rawAccData = parseResponse(t); })
+                        .catch(e => {
+                            console.warn("Accessory Data fetch failed: ", e);
+                            const errDiv = document.getElementById('accErrorMsg');
+                            if(errDiv) {
+                                errDiv.innerHTML = "ดึงข้อมูล Accessory ไม่สำเร็จ!<br>โปรดตรวจสอบการตั้งค่า Flow เช่นเดียวกับ Part Purchase";
+                                errDiv.style.display = 'block';
+                            }
+                        });
+                        
+            Promise.all([p1, p2, p3, p4]).then(() => { 
+                if (rawSummaryData && rawSummaryData.length > 0) {
+                    initDashboard(); 
+                } else {
+                    document.getElementById('displayStoreName').textContent = "ดึงข้อมูลล้มเหลว กรุณารีเฟรชหน้าเว็บ";
+                    document.getElementById('storeFilter').innerHTML = `<option>-- ไม่มีข้อมูล --</option>`;
+                    document.getElementById('monthFilter').innerHTML = `<option>-- ไม่มีข้อมูล --</option>`;
+                }
+            });
+        }
+
+        function initDashboard() {
+            let monthMap = new Map();
+            let storeSet = new Set();
+            
+            rawSummaryData.forEach(r => {
+                if (r[COL_STORE]) storeSet.add(r[COL_STORE]);
+                if (r[COL_MONTH] && r[COL_MONTH_NO]) monthMap.set(r[COL_MONTH], parseInt(r[COL_MONTH_NO]));
+            });
+
+            if (rawPartData.length > 0) {
+                const storeKeyPart = findColumnKey(rawPartData[0], ['store', 'สาขา', 'partner']);
+                if (storeKeyPart) {
+                    rawPartData.forEach(r => {
+                        if (r[storeKeyPart]) storeSet.add(r[storeKeyPart]);
+                    });
+                }
+            }
+
+            if (rawAccData.length > 0) {
+                const storeKeyAcc = findColumnKey(rawAccData[0], ['store', 'สาขา', 'partner']);
+                if (storeKeyAcc) {
+                    rawAccData.forEach(r => {
+                        if (r[storeKeyAcc]) storeSet.add(r[storeKeyAcc]);
+                    });
+                }
+            }
+
+            let months = Array.from(monthMap.keys()).sort((a,b) => monthMap.get(a) - monthMap.get(b));
+            let stores = Array.from(storeSet).sort();
+
+            const storeDropdown = document.getElementById('storeFilter');
+            const monthDropdown = document.getElementById('monthFilter');
+            
+            storeDropdown.innerHTML = `<option value="">-- All Partners --</option>`;
+            stores.forEach(opt => storeDropdown.innerHTML += `<option value="${opt}">${opt}</option>`);
+            
+            monthDropdown.innerHTML = `<option value="">-- All Months --</option>`;
+            months.forEach(opt => monthDropdown.innerHTML += `<option value="${opt}">${opt}</option>`);
+
+            // เช็คสิทธิ์เพื่อเปิด/ปิด Dropdown
+            if (!isAdmin) {
+                storeDropdown.value = loggedInUser;
+                storeDropdown.disabled = true; 
+            } else {
+                storeDropdown.disabled = false;
+            }
+            monthDropdown.disabled = false;
+
+            storeDropdown.addEventListener('change', updateDashboard);
+            monthDropdown.addEventListener('change', updateDashboard);
+            const quarterDropdown = document.getElementById('quarterFilter');
+            if (quarterDropdown) quarterDropdown.addEventListener('change', updateDashboard);
+
+            updateDashboard();
+        }
+
+        function findColumnKey(row, keywords) {
+            if (!row) return null;
+            const keys = Object.keys(row);
+            for (let word of keywords) {
+                let found = keys.find(k => k.toLowerCase().includes(word.toLowerCase()));
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function updateDashboard() {
+            const selStore = document.getElementById('storeFilter').value;
+            const selMonth = document.getElementById('monthFilter').value;
+
+            let chartData = rawSummaryData;
+            if (selStore) chartData = chartData.filter(r => r[COL_STORE] === selStore);
+            let tableData = chartData;
+            if (selMonth) tableData = tableData.filter(r => r[COL_MONTH] === selMonth);
+
+            document.getElementById('displayStoreName').textContent = selStore || "All Partners Overview";
+
+            // ---------------- Summary Tab Calculations (YTD) ----------------
+            let summaryCsiData = selStore ? rawSummaryData.filter(r => r[COL_STORE] === selStore) : rawSummaryData;
+            let avgSumCSI = calculateAvg(summaryCsiData, COL_CSI);
+            let avgSumNPS = calculateAvg(summaryCsiData, COL_NPS);
+            document.getElementById('kpiSumCSI').textContent = isNaN(avgSumCSI) ? '-' : (avgSumCSI * 100).toFixed(1) + '%';
+            document.getElementById('kpiSumNPS').textContent = isNaN(avgSumNPS) ? '-' : (avgSumNPS * 100).toFixed(1) + '%';
+
+            let summaryPartData = rawPartData;
+            if (selStore && rawPartData.length > 0) {
+                const storeKey = findColumnKey(rawPartData[0], ['store', 'partner', 'สาขา']);
+                if (storeKey) summaryPartData = summaryPartData.filter(r => r[storeKey] === selStore);
+            }
+            let totalSumPart = 0;
+            if(summaryPartData.length > 0) {
+                const partPurchKey = findColumnKey(summaryPartData[0], ['purchase', 'actual', 'amount', 'ยอด', 'ส่วน', 'SumAmount']);
+                if (partPurchKey) {
+                    summaryPartData.forEach(r => { totalSumPart += (parseFloat(r[partPurchKey]) || 0); });
+                }
+            }
+            document.getElementById('kpiSumPart').textContent = (totalSumPart / 1000000).toFixed(2) + 'M';
+
+            let summaryAccData = rawAccData;
+            if (selStore && rawAccData.length > 0) {
+                const storeKey = findColumnKey(rawAccData[0], ['store', 'partner', 'สาขา']);
+                if (storeKey) summaryAccData = summaryAccData.filter(r => r[storeKey] === selStore);
+            }
+            let totalSumAcc = 0;
+            if(summaryAccData.length > 0) {
+                const accPurchKey = findColumnKey(summaryAccData[0], ['purchase', 'actual', 'amount', 'ยอด', 'ส่วน', 'SumAmount']);
+                if (accPurchKey) {
+                    summaryAccData.forEach(r => { totalSumAcc += (parseFloat(r[accPurchKey]) || 0); });
+                }
+            }
+            document.getElementById('kpiSumAcc').textContent = (totalSumAcc / 1000000).toFixed(2) + 'M';
+            // ---------------------------------------------------------------
+
+            let avgCSI = calculateAvg(tableData, COL_CSI);
+            let avgNPS = calculateAvg(tableData, COL_NPS);
+            document.getElementById('kpiCSI').textContent = isNaN(avgCSI) ? '-' : (avgCSI * 100).toFixed(1) + '%';
+            document.getElementById('kpiNPS').textContent = isNaN(avgNPS) ? '-' : (avgNPS * 100).toFixed(1) + '%';
+            
+
+            drawChart(chartData);
+            renderTables(tableData);
+
+            let filteredRawData = rawCsiTableData;
+            if (selStore) {
+                filteredRawData = filteredRawData.filter(r => {
+                    for (let key in r) {
+                        if (key.includes('Store Name') && r[key] === selStore) return true;
+                    }
+                    return false;
+                });
+            }
+            currentFilteredRawData = filteredRawData;
+            document.getElementById('kpiSample').textContent = filteredRawData.length.toLocaleString(); 
+            renderRawTable(filteredRawData);
+
+            let filteredPartData = rawPartData;
+            if (selStore && rawPartData.length > 0) {
+                const storeKeyPart = findColumnKey(rawPartData[0], ['store', 'partner', 'สาขา']);
+                if (storeKeyPart) {
+                    filteredPartData = filteredPartData.filter(r => r[storeKeyPart] === selStore);
+                }
+            }
+            
+            const selQuarter = document.getElementById('quarterFilter') ? document.getElementById('quarterFilter').value : "";
+            if (selQuarter && filteredPartData.length > 0) {
+                const monthKey = findColumnKey(filteredPartData[0], ['month', 'เดือน']);
+                if (monthKey) {
+                    filteredPartData = filteredPartData.filter(r => QUARTER_MAP[r[monthKey]] === selQuarter);
+                }
+            }
+            drawPartPurchaseChart(filteredPartData);
+
+            // ---------------- Accessory Filter ----------------
+            let filteredAccData = rawAccData;
+            if (selStore && rawAccData.length > 0) {
+                const storeKeyAcc = findColumnKey(rawAccData[0], ['store', 'partner', 'สาขา']);
+                if (storeKeyAcc) {
+                    filteredAccData = filteredAccData.filter(r => r[storeKeyAcc] === selStore);
+                }
+            }
+            
+            if (selQuarter && filteredAccData.length > 0) {
+                const monthKey = findColumnKey(filteredAccData[0], ['month', 'เดือน']);
+                if (monthKey) {
+                    filteredAccData = filteredAccData.filter(r => QUARTER_MAP[r[monthKey]] === selQuarter);
+                }
+            }
+            drawAccPurchaseChart(filteredAccData);
+        }
+
+        const QUARTER_MAP = {
+            "January": "Q1", "February": "Q1", "March": "Q1", "Jan": "Q1", "Feb": "Q1", "Mar": "Q1",
+            "April": "Q2", "May": "Q2", "June": "Q2", "Apr": "Q2", "Jun": "Q2",
+            "July": "Q3", "August": "Q3", "September": "Q3", "Jul": "Q3", "Aug": "Q3", "Sep": "Q3",
+            "October": "Q4", "November": "Q4", "December": "Q4", "Oct": "Q4", "Nov": "Q4", "Dec": "Q4"
+        };
+
+        const MONTH_ORDER = {
+            "January": 1, "February": 2, "March": 3, "April": 4, "May": 5, "June": 6,
+            "July": 7, "August": 8, "September": 9, "October": 10, "November": 11, "December": 12,
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        };
+
+        function drawAccPurchaseChart(data) {
+            const errDiv = document.getElementById('accErrorMsg');
+            errDiv.style.display = 'none';
+
+            document.getElementById('kpiAccPurchase').textContent = '--';
+
+            if (!data || data.length === 0) {
+                if (rawAccData.length > 0) {
+                    errDiv.textContent = "ไม่มีข้อมูล Accessory Purchase สำหรับสาขานี้";
+                } else if (errDiv.textContent === "") {
+                    errDiv.textContent = "ระบบไม่ได้รับข้อมูล Accessory Purchase กรุณาตรวจสอบการตั้งค่า CORS และการใส่ File Content ในช่อง Body";
+                }
+                errDiv.style.display = 'block';
+                if (accChartInstance) { accChartInstance.destroy(); accChartInstance = null; }
+                return;
+            }
+
+            const monthKey = findColumnKey(data[0], ['month', 'เดือน']);
+            const purchaseKey = findColumnKey(data[0], ['purchase', 'actual', 'amount', 'ยอด', 'ส่วน', 'SumAmount']);
+
+            if (!monthKey || !purchaseKey) {
+                errDiv.textContent = `ไม่พบคอลัมน์ข้อมูลที่ต้องการ (Month, Purchase)! (คอลัมน์ที่มี: ` + Object.keys(data[0]).join(', ') + `)`;
+                errDiv.style.display = 'block';
+                if (accChartInstance) { accChartInstance.destroy(); accChartInstance = null; }
+                return;
+            }
+
+            let monthlyAgg = {};
+            let totalPurchase = 0;
+
+            data.forEach(r => {
+                let m = r[monthKey];
+                if (!m) return;
+                
+                let p = parseFloat(r[purchaseKey]) || 0;
+
+                if (!monthlyAgg[m]) {
+                    monthlyAgg[m] = { purchase: 0, order: MONTH_ORDER[m] || 99 };
+                }
+                monthlyAgg[m].purchase += p;
+                
+                totalPurchase += p;
+            });
+            
+            document.getElementById('kpiAccPurchase').textContent = (totalPurchase / 1000000).toFixed(2) + 'M';
+            
+            let sortedMonths = Object.keys(monthlyAgg).sort((a, b) => monthlyAgg[a].order - monthlyAgg[b].order);
+            
+            let chartLabels = sortedMonths;
+            let chartPurchase = sortedMonths.map(m => monthlyAgg[m].purchase / 1000000);
+
+            const ctx = document.getElementById('accPurchaseChart').getContext('2d');
+            if (accChartInstance) accChartInstance.destroy();
+
+            accChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Accessory purchase',
+                            data: chartPurchase,
+                            backgroundColor: '#2A8CFF',
+                            borderRadius: 4,
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'end',
+                                color: 'black',
+                                font: { weight: 'bold', size: 12 },
+                                formatter: function(value) {
+                                    if(!value || value === 0) return '';
+                                    return value.toFixed(2) + 'M';
+                                },
+                                offset: 4
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', align: 'start' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Accessory purchase (THB)' },
+                            ticks: {
+                                callback: function(value) { return value.toFixed(1) + 'M'; }
+                            }
+                        },
+                        x: {
+                            ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, font: {weight: 'bold'} }
+                        }
+                    }
+                }
+            });
+        }
+
+function drawPartPurchaseChart(data) {
+            const errDiv = document.getElementById('partErrorMsg');
+            errDiv.style.display = 'none';
+
+            document.getElementById('kpiPartTarget').textContent = '--';
+            document.getElementById('kpiPartPurchase').textContent = '--';
+            document.getElementById('kpiPartAchieved').textContent = '--';
+
+            if (!data || data.length === 0) {
+                if (rawPartData.length > 0) {
+                    errDiv.textContent = "ไม่มีข้อมูล Part Purchase สำหรับสาขานี้";
+                } else if (errDiv.textContent === "") {
+                    errDiv.textContent = "ระบบไม่ได้รับข้อมูล Part Purchase กรุณาตรวจสอบการตั้งค่า CORS และการใส่ File Content ในช่อง Body";
+                }
+                errDiv.style.display = 'block';
+                if (partChartInstance) { partChartInstance.destroy(); partChartInstance = null; }
+                return;
+            }
+
+            const monthKey = findColumnKey(data[0], ['month', 'เดือน']);
+            const purchaseKey = findColumnKey(data[0], ['purchase', 'actual', 'amount', 'ยอด', 'ส่วน', 'SumAmount']);
+            const targetKey = findColumnKey(data[0], ['SumPart_Sale_target', 'target', 'เป้า']);
+
+            if (!monthKey || !purchaseKey) {
+                errDiv.textContent = `ไม่พบคอลัมน์ข้อมูลที่ต้องการ (Month, Purchase)! (คอลัมน์ที่มี: ${Object.keys(data[0]).join(', ')})`;
+                errDiv.style.display = 'block';
+                if (partChartInstance) { partChartInstance.destroy(); partChartInstance = null; }
+                return;
+            }
+
+            let monthlyAgg = {};
+            let totalPurchase = 0;
+            let totalTarget = 0;
+
+            data.forEach(r => {
+                let m = r[monthKey];
+                if (!m) return;
+                
+                let p = parseFloat(r[purchaseKey]) || 0;
+                let t = targetKey ? (parseFloat(r[targetKey]) || 0) : 0;
+
+                if (!monthlyAgg[m]) {
+                    monthlyAgg[m] = { purchase: 0, target: 0, count: 0, order: MONTH_ORDER[m] || 99 };
+                }
+                monthlyAgg[m].purchase += p;
+                monthlyAgg[m].target += t; 
+                
+                totalPurchase += p;
+                totalTarget += t;
+            });
+            
+            document.getElementById('kpiPartTarget').textContent = (totalTarget > 0 ? (totalTarget / 1000000).toFixed(2) + 'M' : '0.00M');
+            document.getElementById('kpiPartPurchase').textContent = (totalPurchase / 1000000).toFixed(2) + 'M';
+            document.getElementById('kpiPartAchieved').textContent = totalTarget > 0 ? ((totalPurchase / totalTarget) * 100).toFixed(1) + '%' : '-';
+            
+
+            let sortedMonths = Object.keys(monthlyAgg).sort((a, b) => monthlyAgg[a].order - monthlyAgg[b].order);
+            
+            let chartLabels = sortedMonths;
+            let chartPurchase = sortedMonths.map(m => monthlyAgg[m].purchase / 1000000);
+            let chartTarget = sortedMonths.map(m => monthlyAgg[m].target / 1000000);
+
+            const ctx = document.getElementById('partPurchaseChart').getContext('2d');
+            if (partChartInstance) partChartInstance.destroy();
+
+            partChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'Target',
+                            data: chartTarget,
+                            borderColor: 'red',
+                            backgroundColor: 'red',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointBackgroundColor: 'red',
+                            pointRadius: 5,
+                            datalabels: {
+                                align: 'bottom',
+                                anchor: 'bottom',
+                                color: 'red',
+                                font: { weight: 'bold', size: 12 },
+                                formatter: function(value) {
+                                    if(!value || value === 0) return '';
+                                    return value.toFixed(2) + 'M';
+                                },
+                                backgroundColor: '#ffe6e6',
+                                borderRadius: 4,
+                                padding: 4
+                            }
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Part purchase',
+                            data: chartPurchase,
+                            backgroundColor: '#2A8CFF',
+                            borderRadius: 4,
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'end',
+                                color: 'black',
+                                font: { weight: 'bold', size: 12 },
+                                formatter: function(value) {
+                                    if(!value || value === 0) return '';
+                                    return value.toFixed(2) + 'M';
+                                },
+                                offset: 4
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', align: 'start' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Part purchase (THB)' },
+                            ticks: {
+                                callback: function(value) { return value.toFixed(1) + 'M'; }
+                            }
+                        },
+                        x: {
+                            ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, font: {weight: 'bold'} }
+                        }
+                    }
+                }
+            });
+        }
+
+        const RAW_COLS = [
+            'Arrival Time', 'Delivery Time', 'Store Name', 'Sender', 'Repair Order', 'Repair Item Name',
+            'Q1', 'Q1 Comment', 'Q2', 'Q2 Comment',
+            'Q3', 'Q3 Comment', 'Q4', 'Q4 Comment',
+            'Q5', 'Q5 Comment', 'Q6', 'Q6 Comment',
+            'Q7', 'Q7 Comment', 'Q8', 'Q8 Comment',
+            'Q9', 'Q9 Comment', 'Other Comment'
+        ];
+        
+        const getVal = (row, colName) => {
+            for (let key in row) {
+                if (key === colName || key.includes(`[` + colName + `]`)) {
+                    let val = row[key];
+                    if (typeof val === 'number' && !Number.isInteger(val)) return val.toFixed(2);
+                    return val;
+                }
+            }
+            return '';
+        };
+
+        function renderRawTable(data) {
+            const tbody = document.getElementById('rawTableBody');
+            tbody.innerHTML = '';
+            const btnExport = document.getElementById('btnExportExcel');
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="25" style="text-align:center; padding: 20px;">ไม่มีข้อมูลสำหรับสาขานี้</td></tr>';
+                btnExport.disabled = true;
+                return;
+            }
+
+            btnExport.disabled = false;
+            let html = '';
+            data.forEach(r => {
+                html += '<tr>';
+                RAW_COLS.forEach(c => {
+                    html += `<td>${getVal(r, c) || ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        function exportToExcel() {
+            if (currentFilteredRawData.length === 0) return;
+            const exportData = currentFilteredRawData.map(r => {
+                let newRow = {};
+                RAW_COLS.forEach(c => {
+                    newRow[c] = getVal(r, c) || '';
+                });
+                return newRow;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "CSI_Raw_Data");
+
+            const selStore = document.getElementById('storeFilter').value || "All_Partners";
+            const safeStoreName = selStore.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const fileName = `CSI_Raw_Data_${safeStoreName}_${dateStr}.xlsx`;
+
+            XLSX.writeFile(wb, fileName);
+        }
+
+        function calculateAvg(data, key) {
+            let valid = data.map(r => parseFloat(r[key])).filter(v => !isNaN(v));
+            if (valid.length === 0) return NaN;
+            return valid.reduce((a,b) => a+b, 0) / valid.length;
+        }
+
+        function drawChart(data) {
+            let monthlyData = {};
+            data.forEach(r => {
+                let m = r[COL_MONTH];
+                let mNo = parseInt(r[COL_MONTH_NO]);
+                if (!m) return;
+                if (!monthlyData[m]) monthlyData[m] = { monthNo: mNo, csiSum: 0, npsSum: 0, count: 0 };
+                let csi = parseFloat(r[COL_CSI]);
+                let nps = parseFloat(r[COL_NPS]);
+                if (!isNaN(csi)) monthlyData[m].csiSum += csi;
+                if (!isNaN(nps)) monthlyData[m].npsSum += nps;
+                monthlyData[m].count++;
+            });
+
+            let sortedMonths = Object.keys(monthlyData).sort((a,b) => monthlyData[a].monthNo - monthlyData[b].monthNo);
+            let labels = sortedMonths;
+            let dataCSI = sortedMonths.map(m => (monthlyData[m].csiSum / monthlyData[m].count) * 100);
+            let dataNPS = sortedMonths.map(m => (monthlyData[m].npsSum / monthlyData[m].count) * 100);
+
+            const ctx = document.getElementById('csiChart').getContext('2d');
+            if (csiChartInstance) csiChartInstance.destroy();
+
+            csiChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { type: 'line', label: 'NPS Score', data: dataNPS, borderColor: 'green', backgroundColor: 'green', borderWidth: 3, tension: 0.1, datalabels: { display: false } },
+                        { type: 'bar', label: 'CSI Score', data: dataCSI, backgroundColor: '#2A8CFF', borderRadius: 4, datalabels: { display: false } }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100, ticks: { callback: function(value) { return value + "%" } } } } }
+            });
+        }
+
+        function colorScore(val) {
+            if (isNaN(val)) return '-';
+            let p = val * 100;
+            return (p >= 97.0) ? `<span class="text-green">${p.toFixed(1)}%</span>` : `<span class="text-red">${p.toFixed(1)}%</span>`;
+        }
+
+        function renderTables(data) {
+            let storeAgg = {};
+            data.forEach(r => {
+                let s = r[COL_STORE];
+                if(!s) return;
+                if(!storeAgg[s]) storeAgg[s] = { csiSum: 0, count: 0 };
+                let csi = parseFloat(r[COL_CSI]);
+                if(!isNaN(csi)) { storeAgg[s].csiSum += csi; storeAgg[s].count++; }
+            });
+            
+            let storeScores = Object.keys(storeAgg).map(s => { return { store: s, csi: storeAgg[s].count > 0 ? storeAgg[s].csiSum / storeAgg[s].count : 0 } }).filter(x => x.csi > 0).sort((a,b) => b.csi - a.csi);
+
+            const renderRank = (tbodyId, list) => {
+                const tbody = document.querySelector(`#${tbodyId} tbody`);
+                tbody.innerHTML = '';
+                if(list.length === 0) tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">ไม่มีข้อมูล</td></tr>';
+                list.forEach(item => { tbody.innerHTML += `<tr><td>${item.store}</td><td>${(item.csi * 100).toFixed(1)}%</td></tr>`; });
+            };
+            
+            renderRank('tableTop', storeScores.slice(0, 5));
+            renderRank('tableBottom', storeScores.slice().sort((a,b) => a.csi - b.csi).slice(0, 5)); 
+
+            let monthAgg = {};
+            data.forEach(r => {
+                let m = r[COL_MONTH];
+                let mNo = parseInt(r[COL_MONTH_NO]);
+                if(!m) return;
+                if(!monthAgg[m]) monthAgg[m] = { monthNo: mNo, count:0, q: [0,0,0,0,0,0,0,0], csi:0, nps:0 };
+                
+                COL_Q.forEach((qKey, idx) => { let v = parseFloat(r[qKey]); if(!isNaN(v)) monthAgg[m].q[idx] += v; });
+                let csi = parseFloat(r[COL_CSI]), nps = parseFloat(r[COL_NPS]);
+                if(!isNaN(csi)) monthAgg[m].csi += csi;
+                if(!isNaN(nps)) monthAgg[m].nps += nps;
+                monthAgg[m].count++;
+            });
+
+            let sortedMonthsDetails = Object.keys(monthAgg).sort((a,b) => monthAgg[a].monthNo - monthAgg[b].monthNo);
+            const detailTbody = document.querySelector('#tableDetail tbody');
+            detailTbody.innerHTML = '';
+
+            if (sortedMonthsDetails.length === 0) detailTbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">ไม่มีข้อมูล</td></tr>';
+            sortedMonthsDetails.forEach(m => {
+                let d = monthAgg[m]; let c = d.count; let tr = `<tr><td>${m}</td>`;
+                d.q.forEach(qSum => { tr += `<td>${colorScore(qSum / c)}</td>`; });
+                tr += `<td><strong>${colorScore(d.csi / c)}</strong></td><td><strong>${colorScore(d.nps / c)}</strong></td></tr>`;
+                detailTbody.innerHTML += tr;
+            });
+        }
+    </script>
+</body>
+</html>

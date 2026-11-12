@@ -352,9 +352,9 @@
         </div>
     </div>
 
-    <!-- 2. หน้า Dashboard (ซ่อนไว้ก่อนจนกว่าจะ Login สำเร็จ) -->
+    <!-- 2. หน้า Dashboard -->
     <div id="dashboardSection" class="hidden">
-        <!-- Sidebar ด้านซ้าย วิ่งตาม scroll (Sticky) -->
+        <!-- Sidebar ด้านซ้าย -->
         <nav class="sidebar">
             <div class="sidebar-brand">
                 <img src="image_1d197f.png" alt="GWM Logo" style="height: 200px; width: 100%; object-fit: contain;">
@@ -362,6 +362,7 @@
             <ul class="sidebar-menu">
                 <li class="active" data-tab="summary"><a href="#summary" onclick="switchTab('summary', event)">🏠 Summary</a></li>
                 <li data-tab="csi"><a href="#csi" onclick="switchTab('csi', event)">📊 CSI</a></li>
+                <li data-tab="bp-csi"><a href="#bp-csi" onclick="switchTab('bp-csi', event)">🚗 BP CSI</a></li>
                 <li data-tab="part"><a href="#part" onclick="switchTab('part', event)">🔩 Part purchase</a></li>
                 <li data-tab="accessory"><a href="#accessory" onclick="switchTab('accessory', event)">✨ Accessory purchase</a></li>
                 <li data-tab="repair"><a href="#repair" onclick="switchTab('repair', event)">🔧 Repair order</a></li>
@@ -377,7 +378,7 @@
             <div class="header-container">
                 <div class="title-area">
                     <h1 id="displayStoreName">กำลังโหลดข้อมูล...</h1>
-                    <h2 id="pageTitle">CSI Report</h2>
+                    <h2 id="pageTitle">Overall Summary</h2>
                 </div>
                 <div class="date-area">
                     <div class="date-box">
@@ -396,7 +397,7 @@
                         <option value="">-- กำลังดึงข้อมูล... --</option>
                     </select>
                 </div>
-                <div class="filter-group" id="monthFilterGroup">
+                <div class="filter-group" id="monthFilterGroup" style="display: none;">
                     <label for="monthFilter">Month:</label>
                     <select id="monthFilter" disabled>
                         <option value="">-- แสดงทุกเดือน --</option>
@@ -496,6 +497,67 @@
                 </div>
             </div>
 
+            <!-- TAB: BP CSI -->
+            <div id="section-bp-csi" class="tab-section">
+                <div class="kpi-container">
+                    <div class="kpi-box"><div class="kpi-title">CSI Score (Avg)</div><div class="kpi-value" id="kpiBpCSI">--%</div></div>
+                    <div class="kpi-box"><div class="kpi-title">NPS Score (Avg)</div><div class="kpi-value" id="kpiBpNPS">--%</div></div>
+                    <div class="kpi-box"><div class="kpi-title">Total Records</div><div class="kpi-value" id="kpiBpSample">--</div></div>
+                </div>
+
+                <div id="bpCsiErrorMsg" style="color: #D31145; background-color:#ffe6e6; border-radius:8px; padding: 15px; margin-bottom:20px; font-weight: bold; display: none;"></div>
+                
+                <div class="chart-container"><canvas id="bpCsiChart"></canvas></div>
+
+                <div class="bottom-section">
+                    <div class="table-wrapper">
+                        <h3>%CSI Top 5 Partners</h3>
+                        <table id="tableBpTop"><thead><tr><th>Store Name</th><th>CSI Score</th></tr></thead><tbody></tbody></table>
+                    </div>
+                    <div class="table-wrapper">
+                        <h3>%CSI Bottom 5 Partners</h3>
+                        <table id="tableBpBottom"><thead><tr><th>Store Name</th><th>CSI Score</th></tr></thead><tbody></tbody></table>
+                    </div>
+                    <div class="table-wrapper">
+                        <h3>Monthly Details</h3>
+                        <table id="tableBpDetail">
+                            <thead>
+                                <tr><th>Month</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th><th>Q6</th><th>Q7</th><th>Q8</th><th>Q9</th><th>CSI</th><th>NPS</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="raw-data-section">
+                    <div class="raw-data-header">
+                        <h3>BP CSI Raw Data</h3>
+                        <button id="btnExportBpExcel" class="export-btn" onclick="exportBpToExcel()" disabled>
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.884 6.68a.5.5 0 1 0-.768.64L7.349 10l-2.233 2.68a.5.5 0 0 0 .768.64L8 10.781l2.116 2.54a.5.5 0 0 0 .768-.641L8.651 10l2.233-2.68a.5.5 0 0 0-.768-.64L8 9.219l-2.116-2.54z"/><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/></svg>
+                            Export Excel
+                        </button>
+                    </div>
+                    <div class="raw-table-container">
+                        <table id="rawBpDataTable" class="raw-table">
+                            <thead>
+                                <tr>
+                                    <th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Sender</th>
+                                    <th>Repair Order</th><th>Repair Item Name</th>
+                                    <th>Q1</th><th>Q1 Comment</th><th>Q2</th><th>Q2 Comment</th>
+                                    <th>Q3</th><th>Q3 Comment</th><th>Q4</th><th>Q4 Comment</th>
+                                    <th>Q5</th><th>Q5 Comment</th><th>Q6</th><th>Q6 Comment</th>
+                                    <th>Q7</th><th>Q7 Comment</th><th>Q8</th><th>Q8 Comment</th>
+                                    <th>Q9</th><th>Q9 Comment</th><th>Q10</th><th>Q10 Comment</th><th>Other Comment</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rawBpTableBody">
+                                <tr><td colspan="27" style="text-align:center; padding: 20px;">กำลังดึงข้อมูล...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB 2: Part purchase -->
             <div id="section-part" class="tab-section">
                 <h3 style="margin-top:0; margin-bottom: 20px;">Part purchase by month</h3>
@@ -555,6 +617,8 @@
         const API_URL_RAW = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/08/workflows/9362c5f22cfc43c88fdaa61ed428a017/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RmLH9lpb8tZlJwQrdU-NQofI_26epheciBnc2znxC8c';
         const API_URL_PART = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/f4fde94178c4468182357f2353194bcf/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5PBxW_j_vbO7ciGvYSU7mcn3fPBJpslV3KQRsx_J3rk';
         const API_URL_ACC = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/04/workflows/011d94fbc95c4d2aab0f2db2fe5781f7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fPhWSHaabPJMx0CciFamE3kabOQhWW7zG6e92PkXpLc';
+        const API_URL_BP_CSI = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/18/workflows/bc4142c54be2433db5574ff5a97c5ce0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=hOtDOkYUvuWiFJILtViWT93N1_AK3J8EQYHG-hjrUh4';
+        const API_URL_BP_RAW = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/14/workflows/957e2ba2e53f4ddeae7c8cc26aeb2752/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Y_Obrjv3K9utibWLvTE50UYaaZLuIyD1vM2kjSfMdzY';
 
         let loggedInUser = "";
         let isAdmin = false;
@@ -661,6 +725,7 @@
             const titles = {
                 'summary': 'Overall Summary',
                 'csi': 'CSI Report',
+                'bp-csi': 'BP CSI Report (Body & Paint)',
                 'part': 'Part Purchase Report',
                 'accessory': 'Accessory Purchase Report',
                 'repair': 'Repair Order Report',
@@ -670,7 +735,7 @@
 
             const monthGroup = document.getElementById('monthFilterGroup');
             const quarterGroup = document.getElementById('quarterFilterGroup');
-            if (tabId === 'csi' || tabId === 'repair' || tabId === 'revenue') {
+            if (tabId === 'csi' || tabId === 'bp-csi' || tabId === 'repair' || tabId === 'revenue') {
                 if(monthGroup) monthGroup.style.display = 'flex';
                 if(quarterGroup) quarterGroup.style.display = 'none';
             } else if (tabId === 'part' || tabId === 'accessory') {
@@ -696,16 +761,34 @@
         let rawCsiTableData = []; 
         let rawPartData = []; 
         let rawAccData = [];
+        let rawBpCsiData = [];
+        let rawBpRawData = [];
         let currentFilteredRawData = []; 
+        let currentFilteredBpRawData = []; 
         
         let csiChartInstance = null;
         let partChartInstance = null;
         let accChartInstance = null;
+        let bpCsiChartInstance = null;
 
         const d = new Date();
         const dateStr = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'2-digit' }).replace(/ /g, '-');
         document.getElementById('displayUpdateDate').textContent = dateStr;
         document.getElementById('displayReportDate').textContent = dateStr;
+
+        
+        // Helper function to format timestamp "YYYY-MM-DDT..." into Month Name
+        function formatMonthName(dateString) {
+            if (!dateString) return '';
+            // Match ISO format like "2026-10-01T00:00:00"
+            const match = dateString.match(/^(\d{4})-(\d{2})-\d{2}T/);
+            if (match) {
+                const monthIndex = parseInt(match[2], 10);
+                const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                return monthNames[monthIndex] || dateString;
+            }
+            return dateString;
+        }
 
         function parseResponse(text) {
             try {
@@ -757,8 +840,25 @@
                                 errDiv.style.display = 'block';
                             }
                         });
+
+            const p5 = fetch(API_URL_BP_CSI, getOpts)
+                        .then(r => { if (!r.ok) throw new Error("BP CSI API Error"); return r.text(); })
+                        .then(t => { rawBpCsiData = parseResponse(t); })
+                        .catch(e => {
+                            console.warn("BP CSI Data fetch failed: ", e);
+                            const errDiv = document.getElementById('bpCsiErrorMsg');
+                            if(errDiv) {
+                                errDiv.innerHTML = "ดึงข้อมูล BP CSI ไม่สำเร็จ!<br>โปรดตรวจสอบ URL ของ Power Automate (ลิงก์ที่ให้มาอาจขาดพารามิเตอร์ Signature เช่น &sp=...&sv=...&sig=...)";
+                                errDiv.style.display = 'block';
+                            }
+                        });
+
+            const p6 = fetch(API_URL_BP_RAW, getOpts)
+                        .then(r => { if (!r.ok) throw new Error("BP RAW API Error"); return r.text(); })
+                        .then(t => { rawBpRawData = parseResponse(t); })
+                        .catch(e => { console.warn("BP RAW Data fetch failed: ", e); });
                         
-            Promise.all([p1, p2, p3, p4]).then(() => { 
+            Promise.all([p1, p2, p3, p4, p5, p6]).then(() => { 
                 if (rawSummaryData && rawSummaryData.length > 0) {
                     initDashboard(); 
                 } else {
@@ -792,6 +892,15 @@
                 if (storeKeyAcc) {
                     rawAccData.forEach(r => {
                         if (r[storeKeyAcc]) storeSet.add(r[storeKeyAcc]);
+                    });
+                }
+            }
+
+            if (rawBpCsiData.length > 0) {
+                const storeKeyBp = findColumnKey(rawBpCsiData[0], ['store', 'สาขา', 'partner', 'PS_Store']) || COL_STORE;
+                if (storeKeyBp) {
+                    rawBpCsiData.forEach(r => {
+                        if (r[storeKeyBp]) storeSet.add(r[storeKeyBp]);
                     });
                 }
             }
@@ -937,6 +1046,80 @@
                 }
             }
             drawAccPurchaseChart(filteredAccData);
+
+            // ---------------- BP CSI Filter ----------------
+            let filteredBpCsiData = rawBpCsiData;
+            if (selStore && rawBpCsiData.length > 0) {
+                const storeKeyBp = findColumnKey(rawBpCsiData[0], ['store', 'partner', 'สาขา', 'PS_Store']) || COL_STORE;
+                if (storeKeyBp) {
+                    filteredBpCsiData = filteredBpCsiData.filter(r => r[storeKeyBp] === selStore);
+                }
+            }
+            
+            // Format dates for Month filter to work correctly with timestamps
+            if (selMonth && filteredBpCsiData.length > 0) {
+                const monthKeyBp = findColumnKey(filteredBpCsiData[0], ['month', 'เดือน', 'Date[Date]']) || COL_MONTH;
+                if (monthKeyBp) {
+                    filteredBpCsiData = filteredBpCsiData.filter(r => formatMonthName(r[monthKeyBp]) === selMonth || r[monthKeyBp] === selMonth);
+                }
+            }
+
+            let avgBpCsi = 0, avgBpNps = 0, bpCsiCount = 0, bpNpsCount = 0;
+            if (filteredBpCsiData.length > 0) {
+                const scoreCol = findColumnKey(filteredBpCsiData[0], ['B1 [TTL_BP_CSI_Score]', 'TTL_BP_CSI_Score', 'BP_CSI_Score', 'BP CSI']);
+                const npsCol = findColumnKey(filteredBpCsiData[0], ['Q10_score', 'Q10', '[Q10_score]', 'Q10 Score']);
+                
+                let sumCsi = 0, sumNps = 0;
+                filteredBpCsiData.forEach(r => {
+                    if(scoreCol) {
+                        let v = parseFloat(r[scoreCol]);
+                        if(!isNaN(v)){ sumCsi += v; bpCsiCount++; }
+                    }
+                    if(npsCol) {
+                        let v = parseFloat(r[npsCol]);
+                        if(!isNaN(v)){ sumNps += v; bpNpsCount++; }
+                    }
+                });
+                avgBpCsi = bpCsiCount > 0 ? sumCsi / bpCsiCount : NaN;
+                avgBpNps = bpNpsCount > 0 ? sumNps / bpNpsCount : NaN;
+            } else {
+                avgBpCsi = NaN;
+                avgBpNps = NaN;
+            }
+
+            document.getElementById('kpiBpCSI').textContent = isNaN(avgBpCsi) ? '-' : (avgBpCsi * 100).toFixed(1) + '%';
+            document.getElementById('kpiBpNPS').textContent = isNaN(avgBpNps) ? '-' : (avgBpNps * 100).toFixed(1) + '%';
+            
+            // For chart and tables, we show all months if only store is selected
+            let chartBpData = selStore ? rawBpCsiData.filter(r => {
+                const storeKeyBp = findColumnKey(rawBpCsiData[0], ['store', 'partner', 'สาขา', 'PS_Store']) || COL_STORE;
+                return r[storeKeyBp] === selStore;
+            }) : rawBpCsiData;
+            
+            drawBpCsiChart(chartBpData); 
+            renderBpTables(chartBpData);
+
+            // ---------------- BP CSI RAW DATA ----------------
+            let filteredBpRawData = rawBpRawData;
+            if (selStore) {
+                filteredBpRawData = filteredBpRawData.filter(r => {
+                    for (let key in r) {
+                        if (key.includes('Store Name') && r[key] === selStore) return true;
+                    }
+                    return false;
+                });
+            }
+            if (selMonth) {
+                // Determine Arrival Time column
+                const timeCol = findColumnKey(filteredBpRawData[0] || {}, ['Arrival Time']) || 'Arrival Time';
+                filteredBpRawData = filteredBpRawData.filter(r => {
+                    let formattedMonth = formatMonthName(r[timeCol]);
+                    return formattedMonth === selMonth;
+                });
+            }
+            currentFilteredBpRawData = filteredBpRawData;
+            document.getElementById('kpiBpSample').textContent = filteredBpRawData.length.toLocaleString(); 
+            renderBpRawTable(filteredBpRawData);
         }
 
         const QUARTER_MAP = {
@@ -951,6 +1134,159 @@
             "July": 7, "August": 8, "September": 9, "October": 10, "November": 11, "December": 12,
             "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
         };
+
+        function drawBpCsiChart(data) {
+            const errDiv = document.getElementById('bpCsiErrorMsg');
+            errDiv.style.display = 'none';
+
+            if (!data || data.length === 0) {
+                if (rawBpCsiData.length > 0) {
+                    errDiv.textContent = "ไม่มีข้อมูล BP CSI สำหรับสาขานี้/เดือนนี้";
+                }
+                errDiv.style.display = 'block';
+                if (bpCsiChartInstance) { bpCsiChartInstance.destroy(); bpCsiChartInstance = null; }
+                return;
+            }
+
+            const monthCol = findColumnKey(data[0], ['Date[Date]', 'month', 'เดือน']) || COL_MONTH;
+            const scoreCol = findColumnKey(data[0], ['B1 [TTL_BP_CSI_Score]', 'TTL_BP_CSI_Score', 'BP_CSI_Score', 'BP CSI']);
+            const npsCol = findColumnKey(data[0], ['Q10_score', 'Q10', '[Q10_score]', 'Q10 Score']);
+
+            if (!monthCol || !scoreCol) {
+                errDiv.textContent = `ไม่พบคอลัมน์ข้อมูลที่ต้องการ (Date[Date] หรือ TTL_BP_CSI_Score)!`;
+                errDiv.style.display = 'block';
+                if (bpCsiChartInstance) { bpCsiChartInstance.destroy(); bpCsiChartInstance = null; }
+                return;
+            }
+
+            let monthlyData = {};
+            data.forEach(r => {
+                let mRaw = r[monthCol];
+                if (!mRaw) return;
+                
+                let m = formatMonthName(mRaw); // Fix date formatting
+                
+                let s = parseFloat(r[scoreCol]);
+                let nps = parseFloat(r[npsCol]);
+
+                if (!monthlyData[m]) {
+                    monthlyData[m] = { scoreSum: 0, count: 0, npsSum: 0, npsCount: 0, order: MONTH_ORDER[m] || 99 };
+                }
+                if (!isNaN(s)) {
+                    monthlyData[m].scoreSum += s;
+                    monthlyData[m].count++;
+                }
+                if (!isNaN(nps)) {
+                    monthlyData[m].npsSum += nps;
+                    monthlyData[m].npsCount++;
+                }
+            });
+            
+            let sortedMonths = Object.keys(monthlyData).sort((a, b) => monthlyData[a].order - monthlyData[b].order);
+            
+            let chartLabels = sortedMonths;
+            let chartDataCSI = sortedMonths.map(m => monthlyData[m].count > 0 ? (monthlyData[m].scoreSum / monthlyData[m].count) * 100 : 0);
+            let chartDataNPS = sortedMonths.map(m => monthlyData[m].npsCount > 0 ? (monthlyData[m].npsSum / monthlyData[m].npsCount) * 100 : 0);
+
+            const ctx = document.getElementById('bpCsiChart').getContext('2d');
+            if (bpCsiChartInstance) bpCsiChartInstance.destroy();
+
+            bpCsiChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        { type: 'line', label: 'NPS Score', data: chartDataNPS, borderColor: 'green', backgroundColor: 'green', borderWidth: 3, tension: 0.1, datalabels: { display: false } },
+                        { type: 'bar', label: 'CSI Score', data: chartDataCSI, backgroundColor: '#2A8CFF', borderRadius: 4, datalabels: { display: false } }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', align: 'start' } },
+                    scales: {
+                        y: {
+                            min: 0, max: 100,
+                            ticks: { callback: function(value) { return value + "%"; } }
+                        },
+                        x: {
+                            ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, font: {weight: 'bold'} }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderBpTables(data) {
+            if(!data || data.length === 0) return;
+            
+            const storeCol = findColumnKey(data[0], ['store', 'partner', 'สาขา', 'PS_Store']) || COL_STORE;
+            const scoreCol = findColumnKey(data[0], ['B1 [TTL_BP_CSI_Score]', 'TTL_BP_CSI_Score', 'BP_CSI_Score', 'BP CSI']);
+            const monthCol = findColumnKey(data[0], ['Date[Date]', 'month', 'เดือน']) || COL_MONTH;
+            const npsCol = findColumnKey(data[0], ['Q10_score', 'Q10', '[Q10_score]', 'Q10 Score']);
+            
+            const qCols = [];
+            for(let i=1; i<=9; i++) {
+                let col = findColumnKey(data[0], [`Q${i}_score`, `[Q${i}_score]`, `Q${i}`]);
+                if(col) qCols.push(col);
+            }
+
+            let storeAgg = {};
+            data.forEach(r => {
+                let s = r[storeCol];
+                if(!s) return;
+                if(!storeAgg[s]) storeAgg[s] = { csiSum: 0, count: 0 };
+                let csi = parseFloat(r[scoreCol]);
+                if(!isNaN(csi)) { storeAgg[s].csiSum += csi; storeAgg[s].count++; }
+            });
+            
+            let storeScores = Object.keys(storeAgg)
+                .map(s => { return { store: s, csi: storeAgg[s].count > 0 ? storeAgg[s].csiSum / storeAgg[s].count : 0 } })
+                .filter(x => x.csi > 0)
+                .sort((a,b) => b.csi - a.csi);
+
+            const renderRank = (tbodyId, list) => {
+                const tbody = document.querySelector(`#${tbodyId} tbody`);
+                if(!tbody) return;
+                tbody.innerHTML = '';
+                if(list.length === 0) tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">ไม่มีข้อมูล</td></tr>';
+                list.forEach(item => { tbody.innerHTML += `<tr><td>${item.store}</td><td>${(item.csi * 100).toFixed(1)}%</td></tr>`; });
+            };
+            
+            renderRank('tableBpTop', storeScores.slice(0, 5));
+            renderRank('tableBpBottom', storeScores.slice().sort((a,b) => a.csi - b.csi).slice(0, 5)); 
+
+            let monthAgg = {};
+            data.forEach(r => {
+                let mRaw = r[monthCol];
+                if(!mRaw) return;
+                let m = formatMonthName(mRaw); // Fix date formatting
+
+                if(!monthAgg[m]) monthAgg[m] = { order: MONTH_ORDER[m] || 99, count:0, q: [0,0,0,0,0,0,0,0,0], csi:0, nps:0 };
+                
+                qCols.forEach((qKey, idx) => { let v = parseFloat(r[qKey]); if(!isNaN(v)) monthAgg[m].q[idx] += v; });
+                let csi = parseFloat(r[scoreCol]), nps = parseFloat(r[npsCol]);
+                if(!isNaN(csi)) monthAgg[m].csi += csi;
+                if(!isNaN(nps)) monthAgg[m].nps += nps;
+                monthAgg[m].count++;
+            });
+
+            let sortedMonthsDetails = Object.keys(monthAgg).sort((a,b) => monthAgg[a].order - monthAgg[b].order);
+            const detailTbody = document.querySelector('#tableBpDetail tbody');
+            if(detailTbody) {
+                detailTbody.innerHTML = '';
+                if (sortedMonthsDetails.length === 0) {
+                    detailTbody.innerHTML = '<tr><td colspan="12" style="text-align:center;">ไม่มีข้อมูล</td></tr>';
+                } else {
+                    sortedMonthsDetails.forEach(m => {
+                        let d = monthAgg[m]; let c = d.count; let tr = `<tr><td>${m}</td>`;
+                        d.q.forEach(qSum => { tr += `<td>${colorScore(qSum / c)}</td>`; });
+                        tr += `<td><strong>${colorScore(d.csi / c)}</strong></td><td><strong>${colorScore(d.nps / c)}</strong></td></tr>`;
+                        detailTbody.innerHTML += tr;
+                    });
+                }
+            }
+        }
 
         function drawAccPurchaseChart(data) {
             const errDiv = document.getElementById('accErrorMsg');
@@ -1208,6 +1544,61 @@ function drawPartPurchaseChart(data) {
             }
             return '';
         };
+
+        
+        const BP_RAW_COLS = [
+            'Arrival Time', 'Delivery Time', 'Store Name', 'Sender', 'Repair Order', 'Repair Item Name',
+            'Q1', 'Q1 Comment', 'Q2', 'Q2 Comment',
+            'Q3', 'Q3 Comment', 'Q4', 'Q4 Comment',
+            'Q5', 'Q5 Comment', 'Q6', 'Q6 Comment',
+            'Q7', 'Q7 Comment', 'Q8', 'Q8 Comment',
+            'Q9', 'Q9 Comment', 'Q10', 'Q10 Comment', 'Other Comment'
+        ];
+
+        function renderBpRawTable(data) {
+            const tbody = document.getElementById('rawBpTableBody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+            const btnExport = document.getElementById('btnExportBpExcel');
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="27" style="text-align:center; padding: 20px;">ไม่มีข้อมูลสำหรับสาขานี้</td></tr>';
+                if(btnExport) btnExport.disabled = true;
+                return;
+            }
+
+            if(btnExport) btnExport.disabled = false;
+            let html = '';
+            data.forEach(r => {
+                html += '<tr>';
+                BP_RAW_COLS.forEach(c => {
+                    html += `<td>${getVal(r, c) || ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        }
+
+        function exportBpToExcel() {
+            if (currentFilteredBpRawData.length === 0) return;
+            const exportData = currentFilteredBpRawData.map(r => {
+                let newRow = {};
+                BP_RAW_COLS.forEach(c => {
+                    newRow[c] = getVal(r, c) || '';
+                });
+                return newRow;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "BP_CSI_Raw_Data");
+
+            const selStore = document.getElementById('storeFilter').value || "All_Partners";
+            const safeStoreName = selStore.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const fileName = `BP_CSI_Raw_Data_${safeStoreName}_${dateStr}.xlsx`;
+
+            XLSX.writeFile(wb, fileName);
+        }
 
         function renderRawTable(data) {
             const tbody = document.getElementById('rawTableBody');

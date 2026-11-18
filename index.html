@@ -169,10 +169,11 @@
         .chart-container { height: 380px; width: 100%; margin-bottom: 40px; position: relative; background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-sizing: border-box; }
         canvas { cursor: pointer; } 
 
+        .retention-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+
         /* ============================
            Tables & DataTables
         ============================ */
-        /* ปรับ Layout ให้ Top 5 & Bottom 5 เรียงกันแนวตั้ง ในคอลัมน์แรก */
         .bottom-section { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 40px; align-items: start; }
         .ranking-column { display: flex; flex-direction: column; gap: 20px; }
         
@@ -211,11 +212,19 @@
         .placeholder-box i { font-size: 40px; color: #ccc; }
         .error-banner { color: #D31145; background-color: #fde8ec; border-left: 5px solid #D31145; border-radius: 4px; padding: 15px; margin-bottom: 20px; font-weight: bold; display: none; font-size: 13px; }
 
+        /* Scrollbar styles for the new Bar chart */
+        .scrollable-chart { overflow-x: auto; overflow-y: hidden; display: block; }
+        .scrollable-chart::-webkit-scrollbar { height: 8px; }
+        .scrollable-chart::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .scrollable-chart::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .scrollable-chart::-webkit-scrollbar-thumb:hover { background: #900C3F; }
+
         /* ============================
            Responsive Design (Mobile/Tablet)
         ============================ */
         @media (max-width: 1024px) {
             .bottom-section { grid-template-columns: 1fr; }
+            .retention-charts { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
             #dashboardSection { flex-direction: column; }
@@ -259,7 +268,6 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" placeholder="Enter password" required>
                 </div>
-                <!-- ปุ่ม Keep me signed in กลับมาแล้ว -->
                 <div class="checkbox-group">
                     <input type="checkbox" id="remember">
                     <label for="remember">Keep me signed in</label>
@@ -289,6 +297,7 @@
                 <li data-tab="part"><a href="#part" onclick="switchTab('part', event)"><i class="fas fa-cogs"></i> Part Purchase</a></li>
                 <li data-tab="accessory"><a href="#accessory" onclick="switchTab('accessory', event)"><i class="fas fa-gem"></i> Acc Purchase</a></li>
                 <li data-tab="repair"><a href="#repair" onclick="switchTab('repair', event)"><i class="fas fa-tools"></i> Repair Order</a></li>
+                <li data-tab="retention"><a href="#retention" onclick="switchTab('retention', event)"><i class="fas fa-user-check"></i> Retention Rate</a></li>
                 <li data-tab="revenue"><a href="#revenue" onclick="switchTab('revenue', event)"><i class="fas fa-file-invoice-dollar"></i> Revenue</a></li>
             </ul>
             <div class="sidebar-footer">
@@ -358,6 +367,23 @@
                         </div>
                     </div>
                     <div class="kpi-box">
+                        <div class="kpi-icon primary" style="background:#fde8ec; color:#900C3F;"><i class="fas fa-paint-roller"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-title">Avg BP CSI Score</div>
+                            <div class="kpi-val-primary" id="kpiSumBpCSI">--%</div>
+                        </div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-icon success"><i class="fas fa-heart"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-title">Avg BP NPS Score</div>
+                            <div class="kpi-val-success" id="kpiSumBpNPS">--%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kpi-container">
+                    <div class="kpi-box">
                         <div class="kpi-icon info"><i class="fas fa-boxes"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Part Purchase (THB)</div>
@@ -378,6 +404,13 @@
                             <div class="kpi-val-neutral" id="kpiSumRO">--</div>
                         </div>
                     </div>
+                    <div class="kpi-box">
+                        <div class="kpi-icon success"><i class="fas fa-user-check"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-title">Retention Rate (Yes)</div>
+                            <div class="kpi-val-success" id="kpiSumRetention">--%</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -391,7 +424,6 @@
                 
                 <div class="chart-container"><canvas id="csiChart"></canvas></div>
                 
-                <!-- Layout ใหม่: บน-ล่าง สำหรับ Ranking, ขวาสำหรับ Monthly Detail -->
                 <div class="bottom-section">
                     <div class="ranking-column">
                         <div class="table-wrapper">
@@ -421,7 +453,7 @@
                     <table id="rawDataTable" class="display" style="width:100%">
                         <thead>
                             <tr>
-                                <th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Sender</th><th>Repair Order</th><th>Repair Item Name</th>
+                                <th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Repair Order</th><th>Repair Item Name</th>
                                 <th>Q1</th><th>Q1 Cmt</th><th>Q2</th><th>Q2 Cmt</th><th>Q3</th><th>Q3 Cmt</th><th>Q4</th><th>Q4 Cmt</th>
                                 <th>Q5</th><th>Q5 Cmt</th><th>Q6</th><th>Q6 Cmt</th><th>Q7</th><th>Q7 Cmt</th><th>Q8</th><th>Q8 Cmt</th>
                                 <th>Q9</th><th>Q9 Cmt</th><th>Other Cmt</th>
@@ -442,7 +474,6 @@
                 <div id="bpCsiErrorMsg" class="error-banner"></div>
                 <div class="chart-container"><canvas id="bpCsiChart"></canvas></div>
                 
-                <!-- Layout ใหม่: บน-ล่าง สำหรับ Ranking, ขวาสำหรับ Monthly Detail -->
                 <div class="bottom-section">
                     <div class="ranking-column">
                         <div class="table-wrapper">
@@ -471,7 +502,7 @@
                     <table id="rawBpDataTable" class="display" style="width:100%">
                         <thead>
                             <tr>
-                                <th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Sender</th><th>Repair Order</th><th>Repair Item Name</th>
+                                <th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Repair Order</th><th>Repair Item Name</th>
                                 <th>Q1</th><th>Q1 Cmt</th><th>Q2</th><th>Q2 Cmt</th><th>Q3</th><th>Q3 Cmt</th><th>Q4</th><th>Q4 Cmt</th>
                                 <th>Q5</th><th>Q5 Cmt</th><th>Q6</th><th>Q6 Cmt</th><th>Q7</th><th>Q7 Cmt</th><th>Q8</th><th>Q8 Cmt</th>
                                 <th>Q9</th><th>Q9 Cmt</th><th>Q10</th><th>Q10 Cmt</th><th>Other Cmt</th>
@@ -534,6 +565,43 @@
                 </div>
             </div>
 
+            <!-- TAB 7: Retention Rate -->
+            <div id="section-retention" class="tab-section">
+                <h3 style="margin-top:0; margin-bottom: 20px; color: var(--gwm-dark); border-bottom: 2px solid var(--gwm-red); display: inline-block; padding-bottom: 5px;">Retention Rate Summary</h3>
+                <div id="retentionErrorMsg" class="error-banner"></div>
+                
+                <div class="retention-charts">
+                    <div class="chart-container" style="height: 450px; display: flex; justify-content: center; align-items: center;">
+                        <canvas id="retentionPieChart"></canvas>
+                    </div>
+                    <!-- ใส่ Class scrollable-chart เพื่อให้เลื่อนซ้าย-ขวาได้เวลามีจำนวนแท่งกราฟเยอะ -->
+                    <div class="chart-container scrollable-chart" style="height: 450px;">
+                        <div id="retentionBarWrapper" style="position: relative; height: 100%; min-width: 100%;">
+                            <canvas id="retentionBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ตาราง Raw Data สำหรับ Retention -->
+                <div class="raw-data-section">
+                    <div class="raw-data-header">
+                        <h3><i class="fas fa-database"></i> Retention Raw Data</h3>
+                        <button id="btnExportRetExcel" class="export-btn" onclick="exportRetToExcel()" disabled><i class="fas fa-file-excel"></i> Export Excel</button>
+                    </div>
+                    <table id="rawRetDataTable" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Store Name</th>
+                                <th>VIN</th>
+                                <th>Retention LV3</th>
+                                <th>Next PM</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rawRetTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- TAB 6: Revenue -->
             <div id="section-revenue" class="tab-section">
                 <div class="placeholder-box">
@@ -559,13 +627,16 @@
         const API_URL_BP_CSI = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/18/workflows/bc4142c54be2433db5574ff5a97c5ce0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=hOtDOkYUvuWiFJILtViWT93N1_AK3J8EQYHG-hjrUh4';
         const API_URL_BP_RAW = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/14/workflows/957e2ba2e53f4ddeae7c8cc26aeb2752/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Y_Obrjv3K9utibWLvTE50UYaaZLuIyD1vM2kjSfMdzY';
         const API_URL_REPAIR = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/03/workflows/90ec8ead125446fd8cd748a070abe5d6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=yrJsnCsoLoeNGx3u_pF6dOMS6qYmd9GxOINVCF_OvGE';
+        const API_URL_RETENTION = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/26/workflows/a1e798233e3441f78affaefae4588def/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xdKFYmAno2-wkZvPdu5hU5JOlHge2D8DnVUZbPcnuYs';
 
         let loggedInUser = "", isAdmin = false;
         let rawSummaryData = [], rawCsiTableData = [], rawPartData = [], rawAccData = [];
-        let rawBpCsiData = [], rawBpRawData = [], rawRepairData = [];
-        let currentFilteredRawData = [], currentFilteredBpRawData = [];
+        let rawBpCsiData = [], rawBpRawData = [], rawRepairData = [], rawRetentionData = [];
+        let currentFilteredRawData = [], currentFilteredBpRawData = [], currentFilteredRetData = [];
         
-        let csiChartInstance = null, partChartInstance = null, accChartInstance = null, bpCsiChartInstance = null, roChartInstance = null;
+        let csiChartInstance = null, partChartInstance = null, accChartInstance = null;
+        let bpCsiChartInstance = null, roChartInstance = null, retentionChartInstance = null;
+        let retentionBarChartInstance = null;
 
         // Dynamic Columns variables
         let COL_STORE = 'PS_Information[PS_Store]';
@@ -655,7 +726,12 @@
             document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
             document.getElementById(`section-${tabId}`).classList.add('active');
 
-            const titles = { 'summary': 'Overall Summary', 'csi': 'CSI Report', 'bp-csi': 'BP CSI Report', 'part': 'Part Purchase Report', 'accessory': 'Accessory Purchase Report', 'repair': 'Repair Order Report', 'revenue': 'Revenue Report' };
+            const titles = { 
+                'summary': 'Overall Summary', 'csi': 'CSI Report', 'bp-csi': 'BP CSI Report', 
+                'part': 'Part Purchase Report', 'accessory': 'Accessory Purchase Report', 
+                'repair': 'Repair Order Report', 'revenue': 'Revenue Report', 
+                'retention': 'Retention Rate Report' 
+            };
             document.getElementById('pageTitle').textContent = titles[tabId] || 'Report';
 
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
@@ -717,7 +793,9 @@
             
             let matched = false;
             Array.from(mSelect.options).forEach(opt => {
-                if (opt.value === clickedLabel || opt.value.startsWith(clickedLabel)) {
+                // สำหรับกราฟที่มีหลายบรรทัด แกน x จะถูกส่งมาเป็น Array ทำให้ต้องเช็คข้อมูลใน index แรก
+                let checkVal = Array.isArray(clickedLabel) ? clickedLabel[0] : clickedLabel;
+                if (opt.value === checkVal || opt.value.startsWith(checkVal)) {
                     mSelect.value = opt.value;
                     matched = true;
                 }
@@ -736,7 +814,6 @@
             }
         }
 
-
         function parseResponse(text) {
             try { const jd = JSON.parse(text); if(Array.isArray(jd)) return jd; } catch(e) {}
             let parsed = [];
@@ -744,99 +821,118 @@
             return parsed;
         }
 
-        // แก้ไข Date Format ให้อ่านวันที่ได้ทุกรูปแบบ
         function formatMonthName(dateString) {
             if (!dateString) return '';
             const str = String(dateString).trim();
             const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             
-            // แบบ ISO: 2026-10-15
             let match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
             if (match) return monthNames[parseInt(match[2], 10)];
             
-            // ใช้ Date ของ JS กรณีรูปแบบอื่นๆ เช่น 15/08/2026
             let d = new Date(str);
             if (!isNaN(d.getTime())) return monthNames[d.getMonth() + 1];
             
             return str;
         }
         
-        // แก้ไข Extract Year ให้หา 20xx ให้เจอไม่ว่า date format จะมาท่าไหน
         function extractYear(dateString) {
             if (!dateString) return '';
             const str = String(dateString);
-            const match = str.match(/\b(20\d{2})\b/);
+            const match = str.match(/\b(20[2-9]\d)\b/); 
             return match ? match[1] : '';
         }
 
         // ====================================================
-        // NEW: GET_VAL FUNCTION 
-        // อัจฉริยะในการดึงค่าจาก Object (รองรับวงเล็บก้ามปู และช่องว่าง)
+        // EXTRACT COLUMN NAME (ดึงชื่อคอลัมน์จาก DAX)
+        // ====================================================
+        function extractColumnName(key) {
+            let k = key;
+            let match = k.match(/\[(.*?)\]/);
+            if (match) {
+                k = match[1];
+            } else if (k.includes('.')) {
+                k = k.split('.').pop();
+            }
+            return k.toLowerCase().replace(/_/g, ' ').trim();
+        }
+
+        // ====================================================
+        // BULLETPROOF GET_VAL (ดึงข้อมูลอย่างแม่นยำ 100%)
         // ====================================================
         function getVal(row, colName) {
             if (!row || !colName) return '';
             
-            // เช็คแบบเป๊ะๆ ก่อน
             if (row[colName] !== undefined && row[colName] !== null) return row[colName];
-            
-            let term = colName.toLowerCase().trim();
-            let altTerm = term.replace('cmt', 'comment');
-            
-            // แปลง term ให้อยู่ในรูปแบบพื้นฐานเพื่อเปรียบเทียบ
-            let termNormalized = term.replace(/[\s_\[\]]/g, '');
-            let altTermNormalized = altTerm.replace(/[\s_\[\]]/g, '');
 
-            // วนลูปหาคีย์ทั้งหมดใน row
-            for (let key in row) {
-                let k = key.toLowerCase();
-                let kNormalized = k.replace(/[\s_\[\]]/g, ''); // เอาช่องว่าง, ขีดล่าง, และวงเล็บออกให้หมด
+            let keys = Object.keys(row);
+            let term = extractColumnName(colName);
+            
+            let baseQMatch = term.match(/^(q\d+)(?:\s+score)?$/); 
+            let baseQ = baseQMatch ? baseQMatch[1] : null;
 
-                // ถ้าคีย์แบบลบตัวอักษรพิเศษแล้วตรงกัน
-                if (kNormalized === termNormalized || kNormalized === altTermNormalized) {
-                    return row[key];
-                }
+            let isComment = term.includes('cmt') || term.includes('comment');
+            let baseCmtMatch = term.match(/^(q\d+)\s+(?:cmt|comment)$/);
+            let baseQCmt = baseCmtMatch ? baseCmtMatch[1] : null;
+
+            for (let key of keys) {
+                let cleanK = extractColumnName(key);
                 
-                // สำหรับหา Q1, Q2,... Q10 โดยดักไม่ให้ Q1 ไปจับกับ Q10
-                let qMatch = termNormalized.match(/^q(\d+)$/);
-                if (qMatch) {
-                    let qNum = qMatch[1];
-                    // ถ้าคีย์ลงท้ายด้วยตัวเลขตรงกัน หรือมีคำว่า score ต่อท้าย
-                    if (kNormalized === termNormalized || kNormalized === termNormalized + 'score') {
+                if (cleanK === term) return row[key];
+                
+                if (baseQ && !isComment) {
+                    if (cleanK === baseQ || cleanK === `${baseQ} score`) {
                         return row[key];
                     }
-                } else {
-                    // ถ้าหาแบบเป๊ะๆ ไม่เจอ ให้ลองหาแบบซ่อนอยู่ข้างใน (เช่น CSI_result[Arrival Time])
-                    if (kNormalized.includes(termNormalized) || kNormalized.includes(altTermNormalized)) {
+                }
+                
+                if (baseQCmt && isComment) {
+                    if (cleanK === `${baseQCmt} cmt` || cleanK === `${baseQCmt} comment`) {
+                        return row[key];
+                    }
+                }
+                
+                if (term === 'other cmt' || term === 'other comment') {
+                    if (cleanK === 'other cmt' || cleanK === 'other comment') {
                         return row[key];
                     }
                 }
             }
+            
+            let fallbackKey = keys.find(k => {
+                let cleanK = extractColumnName(k);
+                if (baseQ && !isComment) {
+                    let regex = new RegExp(`\\b${baseQ}\\b`);
+                    return regex.test(cleanK) && !cleanK.includes('cmt') && !cleanK.includes('comment');
+                }
+                return cleanK.includes(term);
+            });
+
+            if (fallbackKey && row[fallbackKey] !== null) return row[fallbackKey];
+
             return '';
         }
 
-
-        // Helper เก่า ใช้สำหรับกราฟ/KPI 
         function findColumnKey(row, keywords) {
             if (!row) return null;
             const keys = Object.keys(row);
+            
             for (let word of keywords) {
-                let lowerWord = word.toLowerCase().replace(/[\s_\[\]]/g, ''); // ลบตัวอักษรพิเศษ
+                let lowerWord = extractColumnName(word);
                 
-                let exactMatch = keys.find(k => {
-                    let kNormalized = k.toLowerCase().replace(/[\s_\[\]]/g, '');
-                    return kNormalized === lowerWord;
-                });
+                let exactMatch = keys.find(k => extractColumnName(k) === lowerWord);
                 if (exactMatch) return exactMatch;
                 
                 let partialMatch = keys.find(k => {
-                    let kNormalized = k.toLowerCase().replace(/[\s_\[\]]/g, '');
-                    return kNormalized.includes(lowerWord);
+                    let cleanK = extractColumnName(k);
+                    if (lowerWord.match(/^q\d$/)) {
+                        return cleanK === lowerWord || cleanK === `${lowerWord} score`;
+                    }
+                    return cleanK.includes(lowerWord); 
                 });
                 if (partialMatch) return partialMatch;
             }
             return null;
         }
-
 
         function showErr(id, msg) {
             const el = document.getElementById(id);
@@ -853,7 +949,8 @@
                 fetch(API_URL_ACC, getOpts).then(r=>r.text()).then(t=>rawAccData=parseResponse(t)).catch(e=>showErr('accErrorMsg', 'ดึงข้อมูล Acc ไม่สำเร็จ')),
                 fetch(API_URL_BP_CSI, getOpts).then(r=>r.text()).then(t=>rawBpCsiData=parseResponse(t)).catch(e=>showErr('bpCsiErrorMsg', 'ดึงข้อมูล BP CSI ไม่สำเร็จ')),
                 fetch(API_URL_BP_RAW, getOpts).then(r=>r.text()).then(t=>rawBpRawData=parseResponse(t)).catch(e=>console.error("BP Raw err", e)),
-                fetch(API_URL_REPAIR, getOpts).then(r=>r.text()).then(t=>rawRepairData=parseResponse(t)).catch(e=>showErr('roErrorMsg', 'ดึงข้อมูล Repair Order ไม่สำเร็จ'))
+                fetch(API_URL_REPAIR, getOpts).then(r=>r.text()).then(t=>rawRepairData=parseResponse(t)).catch(e=>showErr('roErrorMsg', 'ดึงข้อมูล Repair Order ไม่สำเร็จ')),
+                fetch(API_URL_RETENTION, getOpts).then(r=>r.text()).then(t=>rawRetentionData=parseResponse(t)).catch(e=>showErr('retentionErrorMsg', 'ดึงข้อมูล Retention ไม่สำเร็จ'))
             ]).then(() => {
                 hideLoading();
                 if (rawSummaryData.length > 0) { initDashboard(); } 
@@ -864,7 +961,6 @@
         function initDashboard() {
             let monthSet = new Set(), storeSet = new Set(), yearSet = new Set();
             
-            // ค้นหาคอลัมน์ Dynamic ให้ตรงกับโครงสร้างข้อมูลใหม่
             if(rawSummaryData.length > 0) {
                 let row = rawSummaryData[0];
                 COL_STORE = findColumnKey(row, ['Store Name', 'PS_Store', 'Store', 'สาขา']) || COL_STORE;
@@ -924,18 +1020,20 @@
 
             document.getElementById('displayStoreName').textContent = selStore || "All Partners Overview";
             
-            // Reusable filtering logic (เพิ่มพารามิเตอร์ ignoreStore)
-            const applyGlobalFilters = (data, storeKey, monthKey, timeKey, ignoreStore = false) => {
+            // เพิ่ม ignoreTime เพื่อข้ามการกรอง ปี, ไตรมาส, เดือน ทั้งหมด
+            const applyGlobalFilters = (data, storeKey, monthKey, timeKey, ignoreStore = false, ignoreTime = false) => {
                 if(!data || data.length === 0) return [];
                 let d = data;
                 
-                // ถ้าระบุว่าไม่ให้สนใจ Store Filter (ใช้กับ Top 5 / Bottom 5)
                 if(!ignoreStore && selStore && storeKey) {
-                    d = d.filter(r => r[storeKey] === selStore);
+                    d = d.filter(r => {
+                        let rowStore = r[storeKey];
+                        return rowStore != null && String(rowStore).trim().toLowerCase() === String(selStore).trim().toLowerCase();
+                    });
                 }
                 
-                if(selYear) {
-                    let yCol = findColumnKey(d[0]||{}, ['Date', '[Year]', 'Year', 'ปี', 'Arrival Time', 'Delivery Time']);
+                if(!ignoreTime && selYear) {
+                    let yCol = findColumnKey(d[0]||{}, ['Date', '[Year]', 'Year', 'ปี']);
                     d = d.filter(r => {
                         let y1 = timeKey && r[timeKey] ? extractYear(r[timeKey]) : '';
                         let y2 = yCol && r[yCol] ? extractYear(r[yCol]) : '';
@@ -949,18 +1047,18 @@
                     });
                 }
                 
-                if(selMonth && monthKey) {
+                if(!ignoreTime && selMonth && monthKey) {
                     d = d.filter(r => {
                         let m = r[monthKey];
                         if (typeof m === 'number' || (!isNaN(m) && String(m).trim() !== '')) {
                             const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
                             m = monthNames[parseInt(m)];
                         } else { m = formatMonthName(m); }
-                        return m === selMonth || formatMonthName(r[monthKey]) === selMonth;
+                        return m === selMonth || r[monthKey] === selMonth;
                     });
                 }
                 
-                if(selQuarter && monthKey) {
+                if(!ignoreTime && selQuarter && monthKey) {
                     d = d.filter(r => {
                         let m = r[monthKey];
                         if (typeof m === 'number' || (!isNaN(m) && String(m).trim() !== '')) {
@@ -978,25 +1076,35 @@
             };
 
             // ---------------- 1. Summary & CSI ----------------
-            let globalSumData = applyGlobalFilters(rawSummaryData, COL_STORE, COL_MONTH, null, true); 
-            let localSumData = applyGlobalFilters(rawSummaryData, COL_STORE, COL_MONTH, null, false); 
+            let globalSumData = applyGlobalFilters(rawSummaryData, COL_STORE, COL_MONTH, null, true, false); 
+            let localSumData = applyGlobalFilters(rawSummaryData, COL_STORE, COL_MONTH, null, false, false); 
             
             let avgCSI = calculateAvg(localSumData, COL_CSI), avgNPS = calculateAvg(localSumData, COL_NPS);
             document.getElementById('kpiSumCSI').textContent = isNaN(avgCSI) ? '-' : (avgCSI * 100).toFixed(1) + '%';
             document.getElementById('kpiSumNPS').textContent = isNaN(avgNPS) ? '-' : (avgNPS * 100).toFixed(1) + '%';
+            
+            let bpGlobalSumData = applyGlobalFilters(rawBpCsiData, findColumnKey(rawBpCsiData[0]||{}, ['store', 'PS_Store', 'Store Name']), findColumnKey(rawBpCsiData[0]||{}, ['month', 'Date[Date]', 'Date']), null, true, false);
+            let bpLocalSumData = applyGlobalFilters(rawBpCsiData, findColumnKey(rawBpCsiData[0]||{}, ['store', 'PS_Store', 'Store Name']), findColumnKey(rawBpCsiData[0]||{}, ['month', 'Date[Date]', 'Date']), null, false, false);
+            let avgBpSumCSI = calculateAvg(bpLocalSumData, findColumnKey(bpLocalSumData[0]||{}, ['TTL_BP_CSI_Score', 'BP_CSI_Score', 'CSI_Score', 'CSI']));
+            let avgBpSumNPS = calculateAvg(bpLocalSumData, findColumnKey(bpLocalSumData[0]||{}, ['Q10_score', 'Q10 score', 'Q10', 'NPS', '[Q10]']));
+            document.getElementById('kpiSumBpCSI').textContent = isNaN(avgBpSumCSI) ? '-' : (avgBpSumCSI * 100).toFixed(1) + '%';
+            document.getElementById('kpiSumBpNPS').textContent = isNaN(avgBpSumNPS) ? '-' : (avgBpSumNPS * 100).toFixed(1) + '%';
+
             document.getElementById('kpiCSI').textContent = document.getElementById('kpiSumCSI').textContent;
             document.getElementById('kpiNPS').textContent = document.getElementById('kpiSumNPS').textContent;
             
             drawChart(localSumData, 'csiChart', csiChartInstance, (inst)=>csiChartInstance=inst, '#900C3F', '#1A1A1A');
             renderRankingAndDetails(globalSumData, localSumData, 'tableTop', 'tableBottom', 'tableDetail', COL_STORE, COL_MONTH, COL_CSI, COL_NPS, COL_Q);
 
-            let rawTimeKey = findColumnKey(rawCsiTableData[0]||{}, ['Arrival Time', 'Delivery Time', 'Date']);
-            let rawCsi = applyGlobalFilters(rawCsiTableData, findColumnKey(rawCsiTableData[0]||{}, ['Store Name']), rawTimeKey, rawTimeKey, false);
+            let rawTimeKey = findColumnKey(rawCsiTableData[0]||{}, ['Arrival Time', 'Delivery Time', 'Date', 'Time']);
+            let rawCsiStoreKey = findColumnKey(rawCsiTableData[0]||{}, ['Store Name', 'Store_Name', 'Store', 'สาขา', 'Partner']) || 'Store Name';
+            let rawCsi = applyGlobalFilters(rawCsiTableData, rawCsiStoreKey, rawTimeKey, rawTimeKey, false, false);
+            
             currentFilteredRawData = rawCsi;
             document.getElementById('kpiSample').textContent = rawCsi.length.toLocaleString();
             
             renderDataTables('rawDataTable', rawCsi, [
-                'Arrival Time','Delivery Time','Store Name','Sender','Repair Order','Repair Item Name',
+                'Arrival Time','Delivery Time','Store Name','Repair Order','Repair Item Name',
                 'Q1','Q1 Cmt','Q2','Q2 Cmt','Q3','Q3 Cmt','Q4','Q4 Cmt','Q5','Q5 Cmt',
                 'Q6','Q6 Cmt','Q7','Q7 Cmt','Q8','Q8 Cmt','Q9','Q9 Cmt','Other Cmt'
             ]);
@@ -1006,7 +1114,7 @@
             let pMonthKey = findColumnKey(rawPartData[0]||{}, ['month','เดือน']);
             let pPurchKey = findColumnKey(rawPartData[0]||{}, ['purchase','actual','amount','ยอด','ส่วน','SumAmount', 'sale', 'part']);
 
-            let partData = applyGlobalFilters(rawPartData, pStoreKey, pMonthKey, null, false);
+            let partData = applyGlobalFilters(rawPartData, pStoreKey, pMonthKey, null, false, false);
             let partSum = partData.reduce((sum, r) => {
                 if (pMonthKey && !r[pMonthKey]) return sum; 
                 return sum + (parseFloat(r[pPurchKey]) || 0);
@@ -1020,7 +1128,7 @@
             let aMonthKey = findColumnKey(rawAccData[0]||{}, ['month','เดือน']);
             let aPurchKey = findColumnKey(rawAccData[0]||{}, ['purchase','actual','amount','ยอด','ส่วน','SumAmount', 'sale', 'part']);
 
-            let accData = applyGlobalFilters(rawAccData, aStoreKey, aMonthKey, null, false);
+            let accData = applyGlobalFilters(rawAccData, aStoreKey, aMonthKey, null, false, false);
             let accSum = accData.reduce((sum, r) => {
                 if (aMonthKey && !r[aMonthKey]) return sum; 
                 return sum + (parseFloat(r[aPurchKey]) || 0);
@@ -1034,8 +1142,8 @@
             let bpStoreKey = findColumnKey(rawBpCsiData[0]||{}, ['store', 'PS_Store', 'Store Name']);
             let bpMonthKey = findColumnKey(rawBpCsiData[0]||{}, ['month', 'Date[Date]', 'Date']);
             
-            let globalBpData = applyGlobalFilters(rawBpCsiData, bpStoreKey, bpMonthKey, bpMonthKey, true);
-            let localBpData = applyGlobalFilters(rawBpCsiData, bpStoreKey, bpMonthKey, bpMonthKey, false);
+            let globalBpData = applyGlobalFilters(rawBpCsiData, bpStoreKey, bpMonthKey, bpMonthKey, true, false); 
+            let localBpData = applyGlobalFilters(rawBpCsiData, bpStoreKey, bpMonthKey, bpMonthKey, false, false);
             
             let bpScoreCol = findColumnKey(localBpData[0]||{}, ['TTL_BP_CSI_Score', 'BP_CSI_Score', 'CSI_Score', 'CSI']);
             let bpNpsCol = findColumnKey(localBpData[0]||{}, ['Q10_score', 'Q10 score', 'Q10', 'NPS', '[Q10]']);
@@ -1045,16 +1153,17 @@
             document.getElementById('kpiBpNPS').textContent = isNaN(avgBpNps) ? '-' : (avgBpNps * 100).toFixed(1) + '%';
             
             drawChart(localBpData, 'bpCsiChart', bpCsiChartInstance, (inst)=>bpCsiChartInstance=inst, '#900C3F', '#1A1A1A', true);
+            renderRankingAndDetails(globalBpData, localBpData, 'tableBpTop', 'tableBpBottom', 'tableBpDetail', bpStoreKey, bpMonthKey, bpScoreCol, bpNpsCol, ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9', 'Q10']); 
             
-            renderRankingAndDetails(globalBpData, localBpData, 'tableBpTop', 'tableBpBottom', 'tableBpDetail', bpStoreKey, bpMonthKey, bpScoreCol, bpNpsCol, ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9']);
+            let bpRawTimeKey = findColumnKey(rawBpRawData[0]||{}, ['Arrival Time', 'Delivery Time', 'Date', 'Time']);
+            let bpRawStoreKey = findColumnKey(rawBpRawData[0]||{}, ['Store Name', 'Store_Name', 'Store', 'สาขา', 'Partner']) || 'Store Name';
+            let rawBp = applyGlobalFilters(rawBpRawData, bpRawStoreKey, bpRawTimeKey, bpRawTimeKey, false, false);
             
-            let bpRawTimeKey = findColumnKey(rawBpRawData[0]||{}, ['Arrival Time', 'Delivery Time', 'Date']);
-            let rawBp = applyGlobalFilters(rawBpRawData, findColumnKey(rawBpRawData[0]||{}, ['Store Name']), bpRawTimeKey, bpRawTimeKey, false);
             currentFilteredBpRawData = rawBp;
             document.getElementById('kpiBpSample').textContent = rawBp.length.toLocaleString();
             
             renderDataTables('rawBpDataTable', rawBp, [
-                'Arrival Time','Delivery Time','Store Name','Sender','Repair Order','Repair Item Name',
+                'Arrival Time','Delivery Time','Store Name','Repair Order','Repair Item Name',
                 'Q1','Q1 Cmt','Q2','Q2 Cmt','Q3','Q3 Cmt','Q4','Q4 Cmt','Q5','Q5 Cmt',
                 'Q6','Q6 Cmt','Q7','Q7 Cmt','Q8','Q8 Cmt','Q9','Q9 Cmt','Q10','Q10 Cmt','Other Cmt'
             ]);
@@ -1062,8 +1171,49 @@
             // ---------------- 5. Repair Order ----------------
             let roStoreKey = findColumnKey(rawRepairData[0]||{}, ['Store_Name', 'Store Name']);
             let roTimeKey = findColumnKey(rawRepairData[0]||{}, ['Date', 'Date[Date]']);
-            let roData = applyGlobalFilters(rawRepairData, roStoreKey, roTimeKey, roTimeKey, false);
+            let roData = applyGlobalFilters(rawRepairData, roStoreKey, roTimeKey, roTimeKey, false, false);
             renderRepairOrder(roData);
+
+            // ---------------- 6. Retention Rate ----------------
+            let retStoreKey = findColumnKey(rawRetentionData[0]||{}, ['Retention_lv_3[Last PM Store]', 'store', 'สาขา', 'partner', 'Store Name', 'PS_Store', 'PS_Information[PS_Store]']);
+            let retMonthKey = findColumnKey(rawRetentionData[0]||{}, ['month', 'เดือน', 'Date', 'Date[Date]', 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Month]']);
+            let retTimeKey = findColumnKey(rawRetentionData[0]||{}, ['Date', 'Date[Date]', 'Time', 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Year]', 'Retention_lv_3[Next PM]']);
+            
+            // ข้อมูลสำหรับ Pie Chart (ข้ามการ Filter เวลาทั้งหมด เพื่อแสดง % รวมของสาขานั้นๆ ตลอดกาล)
+            let retentionDataNoTimeFilter = applyGlobalFilters(rawRetentionData, retStoreKey, retMonthKey, retTimeKey, false, true);
+            
+            // ข้อมูลสำหรับ Raw Table (ยังคงใช้ Filter ปี/เดือน/ไตรมาส ตามที่ผู้ใช้เลือก เพื่อให้ข้อมูลสอดคล้องกับ Bar Chart)
+            let filteredRetentionData = applyGlobalFilters(rawRetentionData, retStoreKey, retMonthKey, retTimeKey, false, false);
+
+            // คำนวณ % Yes สำหรับ KPI ในหน้า Summary (อิงจาก Pie Chart)
+            let lv3ColForKpi = findColumnKey(retentionDataNoTimeFilter[0] || {}, ['Retention_lv_3[Retention LV3]', 'Retention_lv_3', 'Retention LV3', 'Retention']) || 'Retention_lv_3[Retention LV3]';
+            let retTotal = 0, retYes = 0;
+            retentionDataNoTimeFilter.forEach(r => {
+                let val = r[lv3ColForKpi];
+                if(val) {
+                    retTotal++;
+                    if(String(val).trim().toLowerCase() === 'yes') retYes++;
+                }
+            });
+            document.getElementById('kpiSumRetention').textContent = retTotal > 0 ? ((retYes / retTotal) * 100).toFixed(1) + '%' : '-';
+
+            // วาดกราฟ Pie และ Bar Chart (โดยส่งชุดข้อมูลที่ไม่โดนตัด Time Filter เข้าไปจัดการภายในฟังก์ชัน)
+            renderRetentionChart(retentionDataNoTimeFilter);
+
+            // เตรียมข้อมูลเพื่อแสดงเฉพาะ 'No' ลงในตาราง Raw Data
+            let rawTableRetentionData = filteredRetentionData.filter(r => {
+                let val = r[lv3ColForKpi];
+                return val && String(val).trim().toLowerCase() === 'no';
+            });
+            currentFilteredRetData = rawTableRetentionData; // เก็บไว้สำหรับการ Export เฉพาะข้อมูล No
+
+            // โหลดข้อมูลใส่ตาราง Raw Data โดยเพิ่มคอลัมน์ VIN
+            renderDataTables('rawRetDataTable', rawTableRetentionData, [
+                'Retention_lv_3[Last PM Store]', 
+                'Retention_lv_3[VIN]',
+                'Retention_lv_3[Retention LV3]', 
+                'Retention_lv_3[Next PM]'
+            ]);
         }
 
         // ================= Common Chart/Table Functions =================
@@ -1079,11 +1229,11 @@
             
             let mKey = isBp ? findColumnKey(data[0]||{},['Date[Date]','month', 'Date']) : COL_MONTH;
             let csiKey = isBp ? findColumnKey(data[0]||{},['TTL_BP_CSI_Score', 'CSI']) : COL_CSI;
-            let npsKey = isBp ? findColumnKey(data[0]||{},['Q10_score', 'Q10']) : COL_NPS;
+            let npsKey = isBp ? findColumnKey(data[0]||{},['Q10_score', 'Q10', 'NPS']) : COL_NPS;
             
             let agg = {};
             data.forEach(r => {
-                let m = formatMonthName(getVal(r, mKey)); if(!m) return;
+                let m = formatMonthName(r[mKey]); if(!m) return;
                 if(!agg[m]) agg[m] = { csiSum:0, npsSum:0, count:0, order: MONTH_ORDER[m]||99 };
                 let c = parseFloat(getVal(r, csiKey)), n = parseFloat(getVal(r, npsKey));
                 if(!isNaN(c)) agg[m].csiSum+=c; if(!isNaN(n)) agg[m].npsSum+=n;
@@ -1097,14 +1247,45 @@
                 data: {
                     labels: sorted,
                     datasets: [
-                        { type: 'line', label: 'NPS Score', data: sorted.map(m=>(agg[m].npsSum/agg[m].count)*100), borderColor: colorLine, backgroundColor: colorLine, borderWidth: 3, datalabels:{display:false} },
-                        { type: 'bar', label: 'CSI Score', data: sorted.map(m=>(agg[m].csiSum/agg[m].count)*100), backgroundColor: colorBar, borderRadius: 4, datalabels:{display:false} }
+                        { 
+                            type: 'line', 
+                            label: 'NPS Score', 
+                            data: sorted.map(m=>(agg[m].npsSum/agg[m].count)*100), 
+                            borderColor: colorLine, 
+                            backgroundColor: colorLine, 
+                            borderWidth: 3, 
+                            datalabels: { 
+                                align: 'top', 
+                                color: colorLine, 
+                                font: { weight: 'bold' },
+                                formatter: v => v ? v.toFixed(1) + '%' : '',
+                                textShadowBlur: 2,
+                                textShadowColor: 'white'
+                            } 
+                        },
+                        { 
+                            type: 'bar', 
+                            label: 'CSI Score', 
+                            data: sorted.map(m=>(agg[m].csiSum/agg[m].count)*100), 
+                            backgroundColor: colorBar, 
+                            borderRadius: 4, 
+                            datalabels: { 
+                                align: 'center', 
+                                anchor: 'center',
+                                color: 'white', 
+                                font: { weight: 'bold' },
+                                formatter: v => v ? v.toFixed(1) + '%' : '',
+                                textShadowBlur: 3,
+                                textShadowColor: 'black'
+                            } 
+                        }
                     ]
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false, 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
                     onClick: function(e, elements) { handleChartClick(e, elements, this); },
-                    scales: { y: { min:0, max:100, ticks:{callback: v=>v+"%"} } } 
+                    scales: { y: { min:0, max: 120, ticks:{callback: v=>v+"%"} } } 
                 }
             }));
         }
@@ -1117,14 +1298,14 @@
             
             let agg = {}; 
             data.forEach(r => { 
-                let mRaw = getVal(r, mKey);
+                let mRaw = r[mKey];
                 if (!mRaw) return; 
                 
                 let m = formatMonthName(mRaw); 
                 if(m) { 
                     if(!agg[m]) agg[m]={p:0,t:0}; 
-                    agg[m].p+=parseFloat(getVal(r, pKey))||0; 
-                    agg[m].t+=parseFloat(getVal(r, tKey))||0; 
+                    agg[m].p+=parseFloat(r[pKey])||0; 
+                    agg[m].t+=parseFloat(r[tKey])||0; 
                 }
             });
             let labels = Object.keys(agg);
@@ -1139,8 +1320,33 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { type: 'line', label: 'Target', data: labels.map(l=>agg[l].t/1000000), borderColor: '#1A1A1A', borderDash: [5,5], datalabels:{align:'bottom', formatter:v=>v?v.toFixed(1)+'M':''} },
-                        { type: 'bar', label: 'Purchase', data: labels.map(l=>agg[l].p/1000000), backgroundColor: '#900C3F', borderRadius: 4, datalabels:{align:'top', formatter:v=>v?v.toFixed(1)+'M':''} }
+                        { 
+                            type: 'line', 
+                            label: 'Target', 
+                            data: labels.map(l=>agg[l].t/1000000), 
+                            borderColor: '#1A1A1A', 
+                            borderDash: [5,5], 
+                            datalabels: {
+                                align:'bottom', 
+                                color: '#1A1A1A', 
+                                font: {weight: 'bold'}, 
+                                formatter:v=>v?v.toFixed(1)+'M':''
+                            } 
+                        },
+                        { 
+                            type: 'bar', 
+                            label: 'Purchase', 
+                            data: labels.map(l=>agg[l].p/1000000), 
+                            backgroundColor: '#900C3F', 
+                            borderRadius: 4, 
+                            datalabels: {
+                                align: 'center', 
+                                anchor: 'center', 
+                                color: 'white', 
+                                font: {weight: 'bold'}, 
+                                formatter:v=>v?v.toFixed(1)+'M':''
+                            } 
+                        }
                     ]
                 },
                 options: { 
@@ -1157,13 +1363,13 @@
             
             let agg = {}; 
             data.forEach(r => { 
-                let mRaw = getVal(r, mKey);
+                let mRaw = r[mKey];
                 if (!mRaw) return; 
                 
                 let m = formatMonthName(mRaw); 
                 if(m) { 
                     if(!agg[m]) agg[m]=0; 
-                    agg[m]+=parseFloat(getVal(r, pKey))||0; 
+                    agg[m]+=parseFloat(r[pKey])||0; 
                 }
             });
             const ctx = document.getElementById('accPurchaseChart').getContext('2d');
@@ -1172,7 +1378,22 @@
             
             accChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: Object.keys(agg), datasets: [{ label: 'Purchase', data: Object.keys(agg).map(l=>agg[l]/1000000), backgroundColor: '#900C3F', borderRadius: 4, datalabels:{align:'top', formatter:v=>v?v.toFixed(1)+'M':''} }] },
+                data: { 
+                    labels: Object.keys(agg), 
+                    datasets: [{ 
+                        label: 'Purchase', 
+                        data: Object.keys(agg).map(l=>agg[l]/1000000), 
+                        backgroundColor: '#900C3F', 
+                        borderRadius: 4, 
+                        datalabels: {
+                            align: 'center', 
+                            anchor: 'center', 
+                            color:'white', 
+                            font: {weight: 'bold'}, 
+                            formatter:v=>v?v.toFixed(1)+'M':''
+                        } 
+                    }] 
+                },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
                     onClick: function(e, elements) { handleChartClick(e, elements, this); }
@@ -1180,9 +1401,168 @@
             });
         }
 
+        // ================= Retention Rate Chart (Pie + Bar) =================
+        function renderRetentionChart(data) {
+            if (!data || data.length === 0) return;
+
+            let yesCount = 0;
+            let noCount = 0;
+
+            let lv3Col = findColumnKey(data[0] || {}, ['Retention_lv_3[Retention LV3]', 'Retention LV3', 'Retention']) || 'Retention_lv_3[Retention LV3]';
+            let nextPmCol = findColumnKey(data[0] || {}, ['Retention_lv_3[Next PM]', 'Next PM', 'Next_PM', 'NextPM']) || 'Retention_lv_3[Next PM]';
+            
+            let aggByMonthYear = {};
+            const selYear = document.getElementById('yearFilter').value;
+
+            data.forEach(r => {
+                let val = r[lv3Col];
+                if (val) {
+                    let strVal = String(val).trim().toLowerCase();
+                    if (strVal === 'yes') {
+                        yesCount++;
+                    } else if (strVal === 'no') {
+                        noCount++;
+                        // จัดกลุ่มสำหรับลูกค้า No ตาม Next PM (เดือน) และ ปี
+                        let pmVal = r[nextPmCol];
+
+                        let mIdx = -1;
+                        let y = extractYear(pmVal) || 'N/A';
+
+                        // กราฟแท่งทางขวาโชว์แค่ปีที่ filter (ดักไว้เฉพาะกราฟแท่ง)
+                        if (selYear && y !== selYear) {
+                            return; 
+                        }
+
+                        if (pmVal) {
+                            if (typeof pmVal === 'number' && pmVal >= 1 && pmVal <= 12) {
+                                mIdx = pmVal - 1;
+                            } else {
+                                let mName = formatMonthName(pmVal);
+                                if (mName) {
+                                    mIdx = {"January":0,"February":1,"March":2,"April":3,"May":4,"June":5,"July":6,"August":7,"September":8,"October":9,"November":10,"December":11}[mName];
+                                } else {
+                                    let lowStr = String(pmVal).toLowerCase().substring(0,3);
+                                    let mIdx2 = {"jan":0,"feb":1,"mar":2,"apr":3,"may":4,"jun":5,"jul":6,"aug":7,"sep":8,"oct":9,"nov":10,"dec":11}[lowStr];
+                                    if (mIdx2 !== undefined) mIdx = mIdx2;
+                                }
+                            }
+                        }
+
+                        if (mIdx >= 0 && mIdx <= 11) {
+                            let mStr = (mIdx < 9 ? '0' : '') + (mIdx + 1); // 01 to 12
+                            let sortKey = `${y}-${mStr}`; // e.g., 2026-01 (สำหรับการเรียงที่ถูกต้อง)
+                            let labelMonth = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][mIdx];
+                            
+                            if(!aggByMonthYear[sortKey]) aggByMonthYear[sortKey] = { y: y, mLabel: labelMonth, count: 0 };
+                            aggByMonthYear[sortKey].count++;
+                        }
+                    }
+                }
+            });
+
+            // --- เตรียมข้อมูลสำหรับกราฟแท่ง (เรียงตาม ปีและเดือนอัตโนมัติ) ---
+            let sortedKeys = Object.keys(aggByMonthYear).sort();
+            let barLabels = [];
+            let barData = [];
+            
+            sortedKeys.forEach(k => {
+                let item = aggByMonthYear[k];
+                // ให้ Labels แสดง 2 บรรทัด (['เดือน', 'ปี'])
+                barLabels.push([item.mLabel, item.y]); 
+                barData.push(item.count);
+            });
+
+            // ปรับขนาดความกว้างของ Wrapper เพื่อให้เกิน 12 เดือนแล้วสามารถ Scroll ได้
+            const wrapper = document.getElementById('retentionBarWrapper');
+            if (wrapper) {
+                if (sortedKeys.length > 12) {
+                    wrapper.style.minWidth = (sortedKeys.length * 60) + 'px'; // 60px ต่อ 1 แท่ง
+                } else {
+                    wrapper.style.minWidth = '100%';
+                }
+            }
+
+            // --- วาด Pie Chart ---
+            const ctxPie = document.getElementById('retentionPieChart').getContext('2d');
+            if (retentionChartInstance) retentionChartInstance.destroy();
+
+            retentionChartInstance = new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: ['Yes', 'No'],
+                    datasets: [{
+                        data: [yesCount, noCount],
+                        backgroundColor: ['#27AE60', '#900C3F'], // เขียวสำหรับ Yes, แดงเลือดหมูสำหรับ No
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { font: { size: 14 } }
+                        },
+                        title: { display: true, text: 'Retention Rate (%)', font: { size: 16, weight: 'bold' }, color: '#1A1A1A' },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: { weight: 'bold', size: 18 },
+                            formatter: (value, ctx) => {
+                                let sum = ctx.chart._metasets[0].total;
+                                if (sum === 0) return '';
+                                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                return value > 0 ? percentage : '';
+                            },
+                            textShadowBlur: 4,
+                            textShadowColor: 'rgba(0,0,0,0.6)'
+                        }
+                    }
+                }
+            });
+
+            // --- วาด Bar Chart ---
+            const ctxBar = document.getElementById('retentionBarChart').getContext('2d');
+            if (retentionBarChartInstance) retentionBarChartInstance.destroy();
+
+            retentionBarChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: barLabels,
+                    datasets: [{
+                        label: 'Pending Customer',
+                        data: barData,
+                        backgroundColor: '#1A1A1A',
+                        borderRadius: 4,
+                        datalabels: {
+                            align: 'end',
+                            anchor: 'end',
+                            color: '#1A1A1A',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: v => v > 0 ? v : ''
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Pending customer by month', font: { size: 16, weight: 'bold' }, color: '#1A1A1A' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, suggestedMax: barData.length ? Math.max(...barData) + 5 : 10 }
+                    }
+                }
+            });
+        }
+
         // ================= DataTables Render =================
         function renderDataTables(tableId, data, cols) {
-            const btn = tableId==='rawDataTable' ? document.getElementById('btnExportExcel') : document.getElementById('btnExportBpExcel');
+            let btn = null;
+            if(tableId === 'rawDataTable') btn = document.getElementById('btnExportExcel');
+            else if(tableId === 'rawBpDataTable') btn = document.getElementById('btnExportBpExcel');
+            else if(tableId === 'rawRetDataTable') btn = document.getElementById('btnExportRetExcel');
             
             if($.fn.DataTable.isDataTable('#'+tableId)) {
                 $('#'+tableId).DataTable().clear().destroy();
@@ -1219,6 +1599,7 @@
 
         function exportToExcel() { exportToSheet(currentFilteredRawData, 'CSI_Raw_Data'); }
         function exportBpToExcel() { exportToSheet(currentFilteredBpRawData, 'BP_CSI_Raw_Data'); }
+        function exportRetToExcel() { exportToSheet(currentFilteredRetData, 'Retention_Raw_Data'); }
         
         function exportToSheet(data, prefix) {
             if(!data.length) return;
@@ -1236,10 +1617,9 @@
         }
 
         function renderRankingAndDetails(globalData, localData, topId, botId, detId, sCol, mCol, cCol, nCol, qCols) {
-            // 1. เรียงอันดับ (ใช้ข้อมูล globalData ที่ไม่โดนบังคับสิทธิ์ Store Filter)
             let sAgg = {}; 
             globalData.forEach(r => { 
-                let s = getVal(r, sCol); 
+                let s = r[sCol]; 
                 if(s) {
                     if(!sAgg[s]) sAgg[s] = {c:0, v:0};
                     let v = parseFloat(getVal(r, cCol));
@@ -1261,20 +1641,23 @@
             renderRank(topId, ranks.slice(0, 5)); 
             renderRank(botId, ranks.slice().reverse().slice(0, 5));
 
-            // 2. Monthly Detail (ใช้ข้อมูล localData ที่เป็นของสาขาที่ Filter มา)
             const MONTH_ORDER = {"January":1,"February":2,"March":3,"April":4,"May":5,"June":6,"July":7,"August":8,"September":9,"October":10,"November":11,"December":12};
             let mAgg = {};
+            
             localData.forEach(r => {
-                let m = formatMonthName(getVal(r, mCol)); if(!m) return;
+                let m = formatMonthName(r[mCol]); if(!m) return;
                 if(!mAgg[m]) mAgg[m] = { order: MONTH_ORDER[m]||99, c:0, q:Array(qCols.length).fill(0), csi:0, nps:0 };
+                
                 qCols.forEach((q,i) => { 
                     let v = parseFloat(getVal(r, q)); 
                     if(!isNaN(v)) mAgg[m].q[i]+=v; 
                 });
+                
                 let csi=parseFloat(getVal(r, cCol)), nps=parseFloat(getVal(r, nCol));
                 if(!isNaN(csi)) mAgg[m].csi+=csi; if(!isNaN(nps)) mAgg[m].nps+=nps;
                 mAgg[m].c++;
             });
+            
             let sortedM = Object.keys(mAgg).sort((a,b)=>mAgg[a].order-mAgg[b].order);
             let detTb = document.querySelector(`#${detId} tbody`); detTb.innerHTML = '';
             
@@ -1302,9 +1685,9 @@
             let monthly = Array(12).fill(0);
 
             data.forEach(r => {
-                let c = parseInt(getVal(r, cCol))||0; sum+=c;
-                let j = String(getVal(r, jCol)||'').toUpperCase();
-                let mRaw = getVal(r, mCol);
+                let c = parseInt(r[cCol])||0; sum+=c;
+                let j = String(r[jCol]||'').toUpperCase();
+                let mRaw = r[mCol];
                 let mIdx = -1;
                 
                 if (typeof mRaw === 'number' || (!isNaN(mRaw) && String(mRaw).trim() !== '')) { 
@@ -1340,7 +1723,21 @@
             if(roChartInstance) roChartInstance.destroy();
             roChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], datasets: [{ label: 'Repair Order', data: monthly, backgroundColor: '#900C3F', datalabels: { align:'top', anchor:'end', formatter: v=>v>0?v.toLocaleString():'' } }] },
+                data: { 
+                    labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], 
+                    datasets: [{ 
+                        label: 'Repair Order', 
+                        data: monthly, 
+                        backgroundColor: '#900C3F', 
+                        datalabels: { 
+                            align: 'center', 
+                            anchor: 'center', 
+                            color: 'white',
+                            font: { weight: 'bold', size: 12 },
+                            formatter: v=>v>0?v.toLocaleString():'' 
+                        } 
+                    }] 
+                },
                 options: { 
                     responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
                     onClick: function(e, elements) { handleChartClick(e, elements, this); }

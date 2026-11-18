@@ -254,8 +254,9 @@
     <!-- Login -->
     <div id="loginSection" class="login-wrapper">
         <div class="login-card">
-            <div class="login-logo">
-                <h2 style="margin:0; color: var(--gwm-red); font-size: 2rem; letter-spacing: 1px;">GWM<span style="color:var(--gwm-dark)">AFTER</span>SALES</h2>
+            <div class="login-logo" style="flex-direction: column; align-items: center; gap: 8px;">
+                <img src="image_1d197f.png" alt="GWM Logo" style="max-width: 200px; height: auto;">
+                <span style="color: var(--gwm-dark); font-size: 0.9rem; font-weight: bold; letter-spacing: 2px;">AFTERSALES</span>
             </div>
             <h1 class="login-title">Partner Portal Login</h1>
             <div id="error-message" class="error-message"><i class="fas fa-exclamation-circle"></i> เกิดข้อผิดพลาดในการเชื่อมต่อระบบ Login</div>
@@ -281,14 +282,15 @@
     <div id="dashboardSection" class="hidden">
         <!-- Mobile Header -->
         <div class="mobile-header">
-            <h3 style="margin:0; color: var(--gwm-red); letter-spacing: 1px;">GWM Portal</h3>
+            <img src="image_1d197f.png" alt="GWM Logo" style="height: 28px; width: auto;">
             <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
         </div>
 
         <!-- Sidebar -->
         <nav class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <h2 style="margin:0; color: var(--gwm-red); font-size: 1.5rem; text-align: center; letter-spacing: 1px;">GWM<br><span style="color:var(--gwm-dark); font-size: 1rem;">AFTERSALES</span></h2>
+            <div class="sidebar-brand" style="flex-direction: column; gap: 6px;">
+                <img src="image_1d197f.png" alt="GWM Logo" style="max-width: 170px; height: auto; display: block;">
+                <span style="color: var(--gwm-dark); font-size: 0.85rem; font-weight: bold; letter-spacing: 1.5px;">AFTERSALES</span>
             </div>
             <ul class="sidebar-menu">
                 <li class="active" data-tab="summary"><a href="#summary" onclick="switchTab('summary', event)"><i class="fas fa-chart-pie"></i> Summary</a></li>

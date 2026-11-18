@@ -248,7 +248,7 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="hidden">
         <div class="spinner"></div>
-        <div class="loading-text" id="loadingText">กำลังดึงข้อมูลจาก GWM Power Automate...</div>
+        <div class="loading-text" id="loadingText">กำลังดึงข้อมูลจากระบบ GWM...</div>
     </div>
 
     <!-- Login -->
@@ -574,7 +574,6 @@
                     <div class="chart-container" style="height: 450px; display: flex; justify-content: center; align-items: center;">
                         <canvas id="retentionPieChart"></canvas>
                     </div>
-                    <!-- ใส่ Class scrollable-chart เพื่อให้เลื่อนซ้าย-ขวาได้เวลามีจำนวนแท่งกราฟเยอะ -->
                     <div class="chart-container scrollable-chart" style="height: 450px;">
                         <div id="retentionBarWrapper" style="position: relative; height: 100%; min-width: 100%;">
                             <canvas id="retentionBarChart"></canvas>
@@ -616,20 +615,13 @@
         Chart.register(ChartDataLabels);
 
         // ==========================================
-        // ตั้งค่าลิงก์ API 
+        // ตั้งค่าลิงก์ API (เชื่อมต่อผ่าน Google Apps Script เท่านั้น)
         // ==========================================
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzwZw3iG80U7mB8dZEPEFbOUFqM6CdUib0Ko6kSlorzsyDMrUx2933Lt7dTExiGrG9CMQ/exec";
-        
-        const API_URL_SUMMARY = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/28/workflows/30fc684f112a41e3935e678789ef3885/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=MIckOhS_-ClPmAw7HO-wJ26wR4DrrvQZWrHRGXoebqY';
-        const API_URL_RAW = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/08/workflows/9362c5f22cfc43c88fdaa61ed428a017/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=RmLH9lpb8tZlJwQrdU-NQofI_26epheciBnc2znxC8c';
-        const API_URL_PART = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/f4fde94178c4468182357f2353194bcf/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=5PBxW_j_vbO7ciGvYSU7mcn3fPBJpslV3KQRsx_J3rk';
-        const API_URL_ACC = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/04/workflows/011d94fbc95c4d2aab0f2db2fe5781f7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=fPhWSHaabPJMx0CciFamE3kabOQhWW7zG6e92PkXpLc';
-        const API_URL_BP_CSI = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/18/workflows/bc4142c54be2433db5574ff5a97c5ce0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=hOtDOkYUvuWiFJILtViWT93N1_AK3J8EQYHG-hjrUh4';
-        const API_URL_BP_RAW = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/14/workflows/957e2ba2e53f4ddeae7c8cc26aeb2752/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Y_Obrjv3K9utibWLvTE50UYaaZLuIyD1vM2kjSfMdzY';
-        const API_URL_REPAIR = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/03/workflows/90ec8ead125446fd8cd748a070abe5d6/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=yrJsnCsoLoeNGx3u_pF6dOMS6qYmd9GxOINVCF_OvGE';
-        const API_URL_RETENTION = 'https://defaulte44e666ccaa74db8a603f27d017cf5.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/26/workflows/a1e798233e3441f78affaefae4588def/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xdKFYmAno2-wkZvPdu5hU5JOlHge2D8DnVUZbPcnuYs';
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzog_FgySl_uDt6ocr4gSWGZO4TiYV0gF9HIg3fNticqoQg2OTSxFVXGp5bF5lRXBh1/exec";
 
-        let loggedInUser = "", isAdmin = false;
+        let authToken = "", loggedInUser = "", isAdmin = false;
+        let sessionExpiredHandled = false;
+
         let rawSummaryData = [], rawCsiTableData = [], rawPartData = [], rawAccData = [];
         let rawBpCsiData = [], rawBpRawData = [], rawRepairData = [], rawRetentionData = [];
         let currentFilteredRawData = [], currentFilteredBpRawData = [], currentFilteredRetData = [];
@@ -655,9 +647,11 @@
         document.getElementById('displayReportDate').textContent = dateStr;
 
         window.onload = function() {
-            if (localStorage.getItem("gwm_logged_in") === "true") {
-                loggedInUser = localStorage.getItem("gwm_user");
-                isAdmin = (localStorage.getItem("gwm_is_admin") === "true");
+            const savedToken = localStorage.getItem("gwm_token") || sessionStorage.getItem("gwm_token");
+            if (savedToken) {
+                authToken = savedToken;
+                loggedInUser = localStorage.getItem("gwm_user") || sessionStorage.getItem("gwm_user") || "";
+                isAdmin = ((localStorage.getItem("gwm_is_admin") || sessionStorage.getItem("gwm_is_admin")) === "true");
                 showDashboard();
             }
         };
@@ -678,23 +672,24 @@
             try {
                 const response = await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ username: usernameInput, password: passwordInput }),
+                    body: JSON.stringify({ action: "login", username: usernameInput, password: passwordInput }),
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
                 const result = await response.json();
 
-                if (result.status === "success") {
+                if (result.status === "success" && result.token) {
+                    authToken = result.token;
                     loggedInUser = result.username || usernameInput;
-                    isAdmin = (loggedInUser.toLowerCase() === "admin");
+                    isAdmin = (result.isAdmin === true);
                     
-                    if (document.getElementById('remember').checked) {
-                        localStorage.setItem("gwm_logged_in", "true");
-                        localStorage.setItem("gwm_user", loggedInUser);
-                        localStorage.setItem("gwm_is_admin", isAdmin);
-                    }
+                    const storage = document.getElementById('remember').checked ? localStorage : sessionStorage;
+                    storage.setItem("gwm_token", authToken);
+                    storage.setItem("gwm_user", loggedInUser);
+                    storage.setItem("gwm_is_admin", String(isAdmin));
+
                     showDashboard();
                 } else {
-                    errorMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> User Name หรือ Password ไม่ถูกต้อง';
+                    errorMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${result.message || 'User Name หรือ Password ไม่ถูกต้อง'}`;
                     errorMsg.style.display = 'block';
                 }
             } catch (error) {
@@ -705,14 +700,36 @@
             }
         }
 
-        function logout() {
-            localStorage.clear(); loggedInUser = ""; isAdmin = false;
+        function logout(expiredMsg = "") {
+            if (authToken) {
+                fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "logout", token: authToken }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                }).catch(() => {});
+            }
+
+            ["gwm_token", "gwm_user", "gwm_is_admin", "gwm_logged_in"].forEach(k => {
+                localStorage.removeItem(k);
+                sessionStorage.removeItem(k);
+            });
+
+            authToken = ""; loggedInUser = ""; isAdmin = false;
             document.getElementById('username').value = ""; document.getElementById('password').value = "";
             document.getElementById('dashboardSection').classList.add('hidden');
             document.getElementById('loginSection').classList.remove('hidden');
+
+            const errorMsg = document.getElementById('error-message');
+            if (expiredMsg) {
+                errorMsg.innerHTML = `<i class="fas fa-clock"></i> ${expiredMsg}`;
+                errorMsg.style.display = 'block';
+            } else {
+                errorMsg.style.display = 'none';
+            }
         }
 
         function showDashboard() {
+            sessionExpiredHandled = false;
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('hidden');
             fetchDashboardData();
@@ -811,13 +828,6 @@
                     }
                 }, 100);
             }
-        }
-
-        function parseResponse(text) {
-            try { const jd = JSON.parse(text); if(Array.isArray(jd)) return jd; } catch(e) {}
-            let parsed = [];
-            Papa.parse(text, { header: true, dynamicTyping: true, skipEmptyLines: true, complete: res => parsed = res.data });
-            return parsed;
         }
 
         function formatMonthName(dateString) {
@@ -959,22 +969,56 @@
             if(el) { el.innerHTML = `<i class='fas fa-exclamation-triangle'></i> ${msg}`; el.style.display = 'block'; }
         }
 
+        // ==========================================
+        // ดึงข้อมูลผ่าน Google Apps Script (ส่ง Token แทนการยิง Power Automate ตรงๆ)
+        // ==========================================
+        async function fetchFromGAS(type, errElementId = null, errMsg = '') {
+            try {
+                const res = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: "getData", token: authToken, type: type }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                });
+                const json = await res.json();
+
+                if (json.status === "unauthorized") {
+                    if (!sessionExpiredHandled) {
+                        sessionExpiredHandled = true;
+                        hideLoading();
+                        logout("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+                    }
+                    return [];
+                }
+
+                if (json.status === "success" && Array.isArray(json.data)) {
+                    return json.data;
+                } else {
+                    if (errElementId) showErr(errElementId, errMsg || json.message);
+                    return [];
+                }
+            } catch (e) {
+                console.error(`Error fetching ${type}:`, e);
+                if (errElementId) showErr(errElementId, errMsg || 'เชื่อมต่อข้อมูลไม่สำเร็จ');
+                return [];
+            }
+        }
+
         function fetchDashboardData() {
             showLoading();
-            const getOpts = { method: 'GET' };
             Promise.all([
-                fetch(API_URL_SUMMARY, getOpts).then(r=>r.text()).then(t=>rawSummaryData=parseResponse(t)).catch(e=>console.error("Sum err", e)),
-                fetch(API_URL_RAW, getOpts).then(r=>r.text()).then(t=>rawCsiTableData=parseResponse(t)).catch(e=>console.error("Raw err", e)),
-                fetch(API_URL_PART, getOpts).then(r=>r.text()).then(t=>rawPartData=parseResponse(t)).catch(e=>showErr('partErrorMsg', 'ดึงข้อมูล Part ไม่สำเร็จ')),
-                fetch(API_URL_ACC, getOpts).then(r=>r.text()).then(t=>rawAccData=parseResponse(t)).catch(e=>showErr('accErrorMsg', 'ดึงข้อมูล Acc ไม่สำเร็จ')),
-                fetch(API_URL_BP_CSI, getOpts).then(r=>r.text()).then(t=>rawBpCsiData=parseResponse(t)).catch(e=>showErr('bpCsiErrorMsg', 'ดึงข้อมูล BP CSI ไม่สำเร็จ')),
-                fetch(API_URL_BP_RAW, getOpts).then(r=>r.text()).then(t=>rawBpRawData=parseResponse(t)).catch(e=>console.error("BP Raw err", e)),
-                fetch(API_URL_REPAIR, getOpts).then(r=>r.text()).then(t=>rawRepairData=parseResponse(t)).catch(e=>showErr('roErrorMsg', 'ดึงข้อมูล Repair Order ไม่สำเร็จ')),
-                fetch(API_URL_RETENTION, getOpts).then(r=>r.text()).then(t=>rawRetentionData=parseResponse(t)).catch(e=>showErr('retentionErrorMsg', 'ดึงข้อมูล Retention ไม่สำเร็จ'))
+                fetchFromGAS('summary').then(d => rawSummaryData = d),
+                fetchFromGAS('raw').then(d => rawCsiTableData = d),
+                fetchFromGAS('part', 'partErrorMsg', 'ดึงข้อมูล Part ไม่สำเร็จ').then(d => rawPartData = d),
+                fetchFromGAS('acc', 'accErrorMsg', 'ดึงข้อมูล Acc ไม่สำเร็จ').then(d => rawAccData = d),
+                fetchFromGAS('bp_csi', 'bpCsiErrorMsg', 'ดึงข้อมูล BP CSI ไม่สำเร็จ').then(d => rawBpCsiData = d),
+                fetchFromGAS('bp_raw').then(d => rawBpRawData = d),
+                fetchFromGAS('repair', 'roErrorMsg', 'ดึงข้อมูล Repair Order ไม่สำเร็จ').then(d => rawRepairData = d),
+                fetchFromGAS('retention', 'retentionErrorMsg', 'ดึงข้อมูล Retention ไม่สำเร็จ').then(d => rawRetentionData = d)
             ]).then(() => {
+                if (sessionExpiredHandled) return;
                 hideLoading();
                 if (rawSummaryData.length > 0) { initDashboard(); } 
-                else { document.getElementById('displayStoreName').textContent = "Failed to load data (CORS or Flow error)"; }
+                else { document.getElementById('displayStoreName').textContent = "ไม่พบข้อมูลสำหรับสาขานี้"; }
             });
         }
 
@@ -1038,7 +1082,7 @@
             const selQuarter = document.getElementById('quarterFilter').value;
             const selYear = document.getElementById('yearFilter').value;
 
-            document.getElementById('displayStoreName').textContent = selStore || "All Partners Overview";
+            document.getElementById('displayStoreName').textContent = selStore || (isAdmin ? "All Partners Overview" : loggedInUser);
             
             const applyGlobalFilters = (data, storeKey, monthKey, timeKey, ignoreStore = false, ignoreTime = false) => {
                 if(!data || data.length === 0) return [];
@@ -1200,9 +1244,9 @@
             renderRepairOrder(roData);
 
             // ---------------- 6. Retention Rate ----------------
-            let retStoreKey = findColumnKey(rawRetentionData[0]||{}, ['Retention_lv_3[Last PM Store]', 'store', 'สาขา', 'partner', 'Store Name', 'PS_Store', 'PS_Information[PS_Store]']);
+            let retStoreKey = findColumnKey(rawRetentionData[0]||{}, ['Retention_lv_3[Last PM Store]', 'Last PM Store', 'store', 'สาขา', 'partner', 'Store Name', 'PS_Store', 'PS_Information[PS_Store]']);
             let retMonthKey = findColumnKey(rawRetentionData[0]||{}, ['month', 'เดือน', 'Date', 'Date[Date]', 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Month]']);
-            let retTimeKey = findColumnKey(rawRetentionData[0]||{}, ['Date', 'Date[Date]', 'Time', 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Year]', 'Retention_lv_3[Next PM]']);
+            let retTimeKey = findColumnKey(rawRetentionData[0]||{}, ['Date', 'Date[Date]', 'Time', 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Year]', 'Retention_lv_3[Next PM]', 'Next PM']);
             
             let retentionDataNoTimeFilter = applyGlobalFilters(rawRetentionData, retStoreKey, retMonthKey, retTimeKey, false, true);
             let filteredRetentionData = applyGlobalFilters(rawRetentionData, retStoreKey, retMonthKey, retTimeKey, false, false);

@@ -488,7 +488,7 @@
                     <div class="table-wrapper monthly-detail-wrapper">
                         <h3>Monthly Details</h3>
                         <table class="summary-table" id="tableBpDetail">
-                            <thead><tr><th>Month</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th><th>Q6</th><th>Q7</th><th>Q8</th><th>Q9</th><th>CSI</th><th>NPS</th></tr></thead>
+                            <thead><tr><th>Month</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th><th>Q6</th><th>Q7</th><th>Q8</th><th>Q9</th><th>BP CSI</th><th>NPS</th></tr></thead>
                             <tbody></tbody>
                         </table>
                     </div>
@@ -502,7 +502,7 @@
                     <table id="rawBpDataTable" class="display" style="width:100%">
                         <thead>
                             <tr>
-                                <th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Repair Order</th><th>Repair Item Name</th>
+                                <th>Report Month</th><th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Repair Order</th><th>Repair Item Name</th>
                                 <th>Q1</th><th>Q1 Cmt</th><th>Q2</th><th>Q2 Cmt</th><th>Q3</th><th>Q3 Cmt</th><th>Q4</th><th>Q4 Cmt</th>
                                 <th>Q5</th><th>Q5 Cmt</th><th>Q6</th><th>Q6 Cmt</th><th>Q7</th><th>Q7 Cmt</th><th>Q8</th><th>Q8 Cmt</th>
                                 <th>Q9</th><th>Q9 Cmt</th><th>Q10</th><th>Q10 Cmt</th><th>Other Cmt</th>
@@ -793,7 +793,6 @@
             
             let matched = false;
             Array.from(mSelect.options).forEach(opt => {
-                // สำหรับกราฟที่มีหลายบรรทัด แกน x จะถูกส่งมาเป็น Array ทำให้ต้องเช็คข้อมูลใน index แรก
                 let checkVal = Array.isArray(clickedLabel) ? clickedLabel[0] : clickedLabel;
                 if (opt.value === checkVal || opt.value.startsWith(checkVal)) {
                     mSelect.value = opt.value;
@@ -831,6 +830,27 @@
             
             let d = new Date(str);
             if (!isNaN(d.getTime())) return monthNames[d.getMonth() + 1];
+            
+            return str;
+        }
+
+        function formatReportMonth(dateString) {
+            if (!dateString) return '';
+            const str = String(dateString).trim();
+            const shortMonths = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            
+            let match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+                let yy = match[1].slice(-2);
+                let mIdx = parseInt(match[2], 10);
+                return shortMonths[mIdx] ? `${shortMonths[mIdx]}-${yy}` : str;
+            }
+            
+            let d = new Date(str);
+            if (!isNaN(d.getTime())) {
+                let yy = String(d.getFullYear()).slice(-2);
+                return `${shortMonths[d.getMonth() + 1]}-${yy}`;
+            }
             
             return str;
         }
@@ -1020,7 +1040,6 @@
 
             document.getElementById('displayStoreName').textContent = selStore || "All Partners Overview";
             
-            // เพิ่ม ignoreTime เพื่อข้ามการกรอง ปี, ไตรมาส, เดือน ทั้งหมด
             const applyGlobalFilters = (data, storeKey, monthKey, timeKey, ignoreStore = false, ignoreTime = false) => {
                 if(!data || data.length === 0) return [];
                 let d = data;
@@ -1086,7 +1105,7 @@
             let bpGlobalSumData = applyGlobalFilters(rawBpCsiData, findColumnKey(rawBpCsiData[0]||{}, ['store', 'PS_Store', 'Store Name']), findColumnKey(rawBpCsiData[0]||{}, ['month', 'Date[Date]', 'Date']), null, true, false);
             let bpLocalSumData = applyGlobalFilters(rawBpCsiData, findColumnKey(rawBpCsiData[0]||{}, ['store', 'PS_Store', 'Store Name']), findColumnKey(rawBpCsiData[0]||{}, ['month', 'Date[Date]', 'Date']), null, false, false);
             let avgBpSumCSI = calculateAvg(bpLocalSumData, findColumnKey(bpLocalSumData[0]||{}, ['TTL_BP_CSI_Score', 'BP_CSI_Score', 'CSI_Score', 'CSI']));
-            let avgBpSumNPS = calculateAvg(bpLocalSumData, findColumnKey(bpLocalSumData[0]||{}, ['Q10_score', 'Q10 score', 'Q10', 'NPS', '[Q10]']));
+            let avgBpSumNPS = calculateAvg(bpLocalSumData, findColumnKey(bpLocalSumData[0]||{}, ['Q10_BP_score', 'Q10_score', 'Q10 score', 'Q10', 'NPS', '[Q10]']));
             document.getElementById('kpiSumBpCSI').textContent = isNaN(avgBpSumCSI) ? '-' : (avgBpSumCSI * 100).toFixed(1) + '%';
             document.getElementById('kpiSumBpNPS').textContent = isNaN(avgBpSumNPS) ? '-' : (avgBpSumNPS * 100).toFixed(1) + '%';
 
@@ -1144,18 +1163,24 @@
             
             let globalBpData = applyGlobalFilters(rawBpCsiData, bpStoreKey, bpMonthKey, bpMonthKey, true, false); 
             let localBpData = applyGlobalFilters(rawBpCsiData, bpStoreKey, bpMonthKey, bpMonthKey, false, false);
-            
+
+            let bpDetailMonthCol = 'Date[Date]';
+            let bpDetailCsiCol = '[TTL_BP_CSI_Score]';
+            let bpDetailNpsCol = '[Q10_BP_score]';
+            let bpDetailQCols = ['[Q1_BP_score]', '[Q2_BP_score]', '[Q3_BP_score]', '[Q4_BP_score]', '[Q5_BP_score]', '[Q6_BP_score]', '[Q7_BP_score]', '[Q8_BP_score]', '[Q9_BP_score]'];
+
             let bpScoreCol = findColumnKey(localBpData[0]||{}, ['TTL_BP_CSI_Score', 'BP_CSI_Score', 'CSI_Score', 'CSI']);
-            let bpNpsCol = findColumnKey(localBpData[0]||{}, ['Q10_score', 'Q10 score', 'Q10', 'NPS', '[Q10]']);
+            let bpNpsCol = findColumnKey(localBpData[0]||{}, ['Q10_BP_score', 'Q10_score', 'Q10', 'NPS', '[Q10]']);
             
             let avgBpCsi = calculateAvg(localBpData, bpScoreCol), avgBpNps = calculateAvg(localBpData, bpNpsCol);
             document.getElementById('kpiBpCSI').textContent = isNaN(avgBpCsi) ? '-' : (avgBpCsi * 100).toFixed(1) + '%';
             document.getElementById('kpiBpNPS').textContent = isNaN(avgBpNps) ? '-' : (avgBpNps * 100).toFixed(1) + '%';
             
             drawChart(localBpData, 'bpCsiChart', bpCsiChartInstance, (inst)=>bpCsiChartInstance=inst, '#900C3F', '#1A1A1A', true);
-            renderRankingAndDetails(globalBpData, localBpData, 'tableBpTop', 'tableBpBottom', 'tableBpDetail', bpStoreKey, bpMonthKey, bpScoreCol, bpNpsCol, ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9', 'Q10']); 
             
-            let bpRawTimeKey = findColumnKey(rawBpRawData[0]||{}, ['Arrival Time', 'Delivery Time', 'Date', 'Time']);
+            renderRankingAndDetails(globalBpData, localBpData, 'tableBpTop', 'tableBpBottom', 'tableBpDetail', bpStoreKey, bpDetailMonthCol, bpDetailCsiCol, bpDetailNpsCol, bpDetailQCols); 
+            
+            let bpRawTimeKey = findColumnKey(rawBpRawData[0]||{}, ['Date[Date]', 'Arrival Time', 'Delivery Time', 'Date', 'Time']);
             let bpRawStoreKey = findColumnKey(rawBpRawData[0]||{}, ['Store Name', 'Store_Name', 'Store', 'สาขา', 'Partner']) || 'Store Name';
             let rawBp = applyGlobalFilters(rawBpRawData, bpRawStoreKey, bpRawTimeKey, bpRawTimeKey, false, false);
             
@@ -1163,7 +1188,7 @@
             document.getElementById('kpiBpSample').textContent = rawBp.length.toLocaleString();
             
             renderDataTables('rawBpDataTable', rawBp, [
-                'Arrival Time','Delivery Time','Store Name','Repair Order','Repair Item Name',
+                'Report Month','Arrival Time','Delivery Time','Store Name','Repair Order','Repair Item Name',
                 'Q1','Q1 Cmt','Q2','Q2 Cmt','Q3','Q3 Cmt','Q4','Q4 Cmt','Q5','Q5 Cmt',
                 'Q6','Q6 Cmt','Q7','Q7 Cmt','Q8','Q8 Cmt','Q9','Q9 Cmt','Q10','Q10 Cmt','Other Cmt'
             ]);
@@ -1179,13 +1204,9 @@
             let retMonthKey = findColumnKey(rawRetentionData[0]||{}, ['month', 'เดือน', 'Date', 'Date[Date]', 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Month]']);
             let retTimeKey = findColumnKey(rawRetentionData[0]||{}, ['Date', 'Date[Date]', 'Time', 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Year]', 'Retention_lv_3[Next PM]']);
             
-            // ข้อมูลสำหรับ Pie Chart (ข้ามการ Filter เวลาทั้งหมด เพื่อแสดง % รวมของสาขานั้นๆ ตลอดกาล)
             let retentionDataNoTimeFilter = applyGlobalFilters(rawRetentionData, retStoreKey, retMonthKey, retTimeKey, false, true);
-            
-            // ข้อมูลสำหรับ Raw Table (ยังคงใช้ Filter ปี/เดือน/ไตรมาส ตามที่ผู้ใช้เลือก เพื่อให้ข้อมูลสอดคล้องกับ Bar Chart)
             let filteredRetentionData = applyGlobalFilters(rawRetentionData, retStoreKey, retMonthKey, retTimeKey, false, false);
 
-            // คำนวณ % Yes สำหรับ KPI ในหน้า Summary (อิงจาก Pie Chart)
             let lv3ColForKpi = findColumnKey(retentionDataNoTimeFilter[0] || {}, ['Retention_lv_3[Retention LV3]', 'Retention_lv_3', 'Retention LV3', 'Retention']) || 'Retention_lv_3[Retention LV3]';
             let retTotal = 0, retYes = 0;
             retentionDataNoTimeFilter.forEach(r => {
@@ -1197,17 +1218,14 @@
             });
             document.getElementById('kpiSumRetention').textContent = retTotal > 0 ? ((retYes / retTotal) * 100).toFixed(1) + '%' : '-';
 
-            // วาดกราฟ Pie และ Bar Chart (โดยส่งชุดข้อมูลที่ไม่โดนตัด Time Filter เข้าไปจัดการภายในฟังก์ชัน)
             renderRetentionChart(retentionDataNoTimeFilter);
 
-            // เตรียมข้อมูลเพื่อแสดงเฉพาะ 'No' ลงในตาราง Raw Data
             let rawTableRetentionData = filteredRetentionData.filter(r => {
                 let val = r[lv3ColForKpi];
                 return val && String(val).trim().toLowerCase() === 'no';
             });
-            currentFilteredRetData = rawTableRetentionData; // เก็บไว้สำหรับการ Export เฉพาะข้อมูล No
+            currentFilteredRetData = rawTableRetentionData;
 
-            // โหลดข้อมูลใส่ตาราง Raw Data โดยเพิ่มคอลัมน์ VIN
             renderDataTables('rawRetDataTable', rawTableRetentionData, [
                 'Retention_lv_3[Last PM Store]', 
                 'Retention_lv_3[VIN]',
@@ -1229,7 +1247,7 @@
             
             let mKey = isBp ? findColumnKey(data[0]||{},['Date[Date]','month', 'Date']) : COL_MONTH;
             let csiKey = isBp ? findColumnKey(data[0]||{},['TTL_BP_CSI_Score', 'CSI']) : COL_CSI;
-            let npsKey = isBp ? findColumnKey(data[0]||{},['Q10_score', 'Q10', 'NPS']) : COL_NPS;
+            let npsKey = isBp ? findColumnKey(data[0]||{},['Q10_BP_score', 'Q10_score', 'Q10', 'NPS']) : COL_NPS;
             
             let agg = {};
             data.forEach(r => {
@@ -1422,13 +1440,11 @@
                         yesCount++;
                     } else if (strVal === 'no') {
                         noCount++;
-                        // จัดกลุ่มสำหรับลูกค้า No ตาม Next PM (เดือน) และ ปี
                         let pmVal = r[nextPmCol];
 
                         let mIdx = -1;
                         let y = extractYear(pmVal) || 'N/A';
 
-                        // กราฟแท่งทางขวาโชว์แค่ปีที่ filter (ดักไว้เฉพาะกราฟแท่ง)
                         if (selYear && y !== selYear) {
                             return; 
                         }
@@ -1449,8 +1465,8 @@
                         }
 
                         if (mIdx >= 0 && mIdx <= 11) {
-                            let mStr = (mIdx < 9 ? '0' : '') + (mIdx + 1); // 01 to 12
-                            let sortKey = `${y}-${mStr}`; // e.g., 2026-01 (สำหรับการเรียงที่ถูกต้อง)
+                            let mStr = (mIdx < 9 ? '0' : '') + (mIdx + 1);
+                            let sortKey = `${y}-${mStr}`;
                             let labelMonth = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][mIdx];
                             
                             if(!aggByMonthYear[sortKey]) aggByMonthYear[sortKey] = { y: y, mLabel: labelMonth, count: 0 };
@@ -1460,29 +1476,25 @@
                 }
             });
 
-            // --- เตรียมข้อมูลสำหรับกราฟแท่ง (เรียงตาม ปีและเดือนอัตโนมัติ) ---
             let sortedKeys = Object.keys(aggByMonthYear).sort();
             let barLabels = [];
             let barData = [];
             
             sortedKeys.forEach(k => {
                 let item = aggByMonthYear[k];
-                // ให้ Labels แสดง 2 บรรทัด (['เดือน', 'ปี'])
                 barLabels.push([item.mLabel, item.y]); 
                 barData.push(item.count);
             });
 
-            // ปรับขนาดความกว้างของ Wrapper เพื่อให้เกิน 12 เดือนแล้วสามารถ Scroll ได้
             const wrapper = document.getElementById('retentionBarWrapper');
             if (wrapper) {
                 if (sortedKeys.length > 12) {
-                    wrapper.style.minWidth = (sortedKeys.length * 60) + 'px'; // 60px ต่อ 1 แท่ง
+                    wrapper.style.minWidth = (sortedKeys.length * 60) + 'px';
                 } else {
                     wrapper.style.minWidth = '100%';
                 }
             }
 
-            // --- วาด Pie Chart ---
             const ctxPie = document.getElementById('retentionPieChart').getContext('2d');
             if (retentionChartInstance) retentionChartInstance.destroy();
 
@@ -1492,7 +1504,7 @@
                     labels: ['Yes', 'No'],
                     datasets: [{
                         data: [yesCount, noCount],
-                        backgroundColor: ['#27AE60', '#900C3F'], // เขียวสำหรับ Yes, แดงเลือดหมูสำหรับ No
+                        backgroundColor: ['#27AE60', '#900C3F'],
                         borderWidth: 1
                     }]
                 },
@@ -1521,7 +1533,6 @@
                 }
             });
 
-            // --- วาด Bar Chart ---
             const ctxBar = document.getElementById('retentionBarChart').getContext('2d');
             if (retentionBarChartInstance) retentionBarChartInstance.destroy();
 
@@ -1581,7 +1592,12 @@
             data.forEach(r => {
                 html += '<tr>';
                 cols.forEach(c => {
-                    let v = getVal(r, c); 
+                    let v;
+                    if (c === 'Report Month') {
+                        v = formatReportMonth(getVal(r, 'Date[Date]'));
+                    } else {
+                        v = getVal(r, c);
+                    }
                     if(typeof v==='number' && !Number.isInteger(v)) v = v.toFixed(2);
                     html += `<td>${v !== null && v !== undefined ? v : ''}</td>`;
                 });

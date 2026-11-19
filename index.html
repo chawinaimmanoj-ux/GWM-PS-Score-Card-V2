@@ -455,7 +455,7 @@
                     <table id="rawDataTable" class="display" style="width:100%">
                         <thead>
                             <tr>
-                                <th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Repair Order</th><th>Repair Item Name</th>
+                                <th>Report Month</th><th>Arrival Time</th><th>Delivery Time</th><th>Store Name</th><th>Repair Order</th><th>Repair Item Name</th>
                                 <th>Q1</th><th>Q1 Cmt</th><th>Q2</th><th>Q2 Cmt</th><th>Q3</th><th>Q3 Cmt</th><th>Q4</th><th>Q4 Cmt</th>
                                 <th>Q5</th><th>Q5 Cmt</th><th>Q6</th><th>Q6 Cmt</th><th>Q7</th><th>Q7 Cmt</th><th>Q8</th><th>Q8 Cmt</th>
                                 <th>Q9</th><th>Q9 Cmt</th><th>Other Cmt</th>
@@ -1161,7 +1161,7 @@
             drawChart(localSumData, 'csiChart', csiChartInstance, (inst)=>csiChartInstance=inst, '#900C3F', '#1A1A1A');
             renderRankingAndDetails(globalSumData, localSumData, 'tableTop', 'tableBottom', 'tableDetail', COL_STORE, COL_MONTH, COL_CSI, COL_NPS, COL_Q);
 
-            let rawTimeKey = findColumnKey(rawCsiTableData[0]||{}, ['Arrival Time', 'Delivery Time', 'Date', 'Time']);
+            let rawTimeKey = findColumnKey(rawCsiTableData[0]||{}, ['Date[Date]', 'Arrival Time', 'Delivery Time', 'Date', 'Time']);
             let rawCsiStoreKey = findColumnKey(rawCsiTableData[0]||{}, ['Store Name', 'Store_Name', 'Store', 'สาขา', 'Partner']) || 'Store Name';
             let rawCsi = applyGlobalFilters(rawCsiTableData, rawCsiStoreKey, rawTimeKey, rawTimeKey, false, false);
             
@@ -1169,7 +1169,7 @@
             document.getElementById('kpiSample').textContent = rawCsi.length.toLocaleString();
             
             renderDataTables('rawDataTable', rawCsi, [
-                'Arrival Time','Delivery Time','Store Name','Repair Order','Repair Item Name',
+                'Report Month','Arrival Time','Delivery Time','Store Name','Repair Order','Repair Item Name',
                 'Q1','Q1 Cmt','Q2','Q2 Cmt','Q3','Q3 Cmt','Q4','Q4 Cmt','Q5','Q5 Cmt',
                 'Q6','Q6 Cmt','Q7','Q7 Cmt','Q8','Q8 Cmt','Q9','Q9 Cmt','Other Cmt'
             ]);
@@ -1659,14 +1659,80 @@
             });
         }
 
-        function exportToExcel() { exportToSheet(currentFilteredRawData, 'CSI_Raw_Data'); }
-        function exportBpToExcel() { exportToSheet(currentFilteredBpRawData, 'BP_CSI_Raw_Data'); }
-        function exportRetToExcel() { exportToSheet(currentFilteredRetData, 'Retention_Raw_Data'); }
-        
-        function exportToSheet(data, prefix) {
-            if(!data.length) return;
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "RawData");
+        // ================= Export Excel (ตรงตามคอลัมน์บนหน้าเว็บ) =================
+        function exportToExcel() {
+            const cols = [
+                { header: 'Report Month', key: 'Report Month' },
+                { header: 'Arrival Time', key: 'Arrival Time' },
+                { header: 'Delivery Time', key: 'Delivery Time' },
+                { header: 'Store Name', key: 'Store Name' },
+                { header: 'Repair Order', key: 'Repair Order' },
+                { header: 'Repair Item Name', key: 'Repair Item Name' },
+                { header: 'Q1', key: 'Q1' }, { header: 'Q1 Cmt', key: 'Q1 Cmt' },
+                { header: 'Q2', key: 'Q2' }, { header: 'Q2 Cmt', key: 'Q2 Cmt' },
+                { header: 'Q3', key: 'Q3' }, { header: 'Q3 Cmt', key: 'Q3 Cmt' },
+                { header: 'Q4', key: 'Q4' }, { header: 'Q4 Cmt', key: 'Q4 Cmt' },
+                { header: 'Q5', key: 'Q5' }, { header: 'Q5 Cmt', key: 'Q5 Cmt' },
+                { header: 'Q6', key: 'Q6' }, { header: 'Q6 Cmt', key: 'Q6 Cmt' },
+                { header: 'Q7', key: 'Q7' }, { header: 'Q7 Cmt', key: 'Q7 Cmt' },
+                { header: 'Q8', key: 'Q8' }, { header: 'Q8 Cmt', key: 'Q8 Cmt' },
+                { header: 'Q9', key: 'Q9' }, { header: 'Q9 Cmt', key: 'Q9 Cmt' },
+                { header: 'Other Cmt', key: 'Other Cmt' }
+            ];
+            exportToSheet(currentFilteredRawData, 'CSI_Raw_Data', cols);
+        }
+
+        function exportBpToExcel() {
+            const cols = [
+                { header: 'Report Month', key: 'Report Month' },
+                { header: 'Arrival Time', key: 'Arrival Time' },
+                { header: 'Delivery Time', key: 'Delivery Time' },
+                { header: 'Store Name', key: 'Store Name' },
+                { header: 'Repair Order', key: 'Repair Order' },
+                { header: 'Repair Item Name', key: 'Repair Item Name' },
+                { header: 'Q1', key: 'Q1' }, { header: 'Q1 Cmt', key: 'Q1 Cmt' },
+                { header: 'Q2', key: 'Q2' }, { header: 'Q2 Cmt', key: 'Q2 Cmt' },
+                { header: 'Q3', key: 'Q3' }, { header: 'Q3 Cmt', key: 'Q3 Cmt' },
+                { header: 'Q4', key: 'Q4' }, { header: 'Q4 Cmt', key: 'Q4 Cmt' },
+                { header: 'Q5', key: 'Q5' }, { header: 'Q5 Cmt', key: 'Q5 Cmt' },
+                { header: 'Q6', key: 'Q6' }, { header: 'Q6 Cmt', key: 'Q6 Cmt' },
+                { header: 'Q7', key: 'Q7' }, { header: 'Q7 Cmt', key: 'Q7 Cmt' },
+                { header: 'Q8', key: 'Q8' }, { header: 'Q8 Cmt', key: 'Q8 Cmt' },
+                { header: 'Q9', key: 'Q9' }, { header: 'Q9 Cmt', key: 'Q9 Cmt' },
+                { header: 'Q10', key: 'Q10' }, { header: 'Q10 Cmt', key: 'Q10 Cmt' },
+                { header: 'Other Cmt', key: 'Other Cmt' }
+            ];
+            exportToSheet(currentFilteredBpRawData, 'BP_CSI_Raw_Data', cols);
+        }
+
+        function exportRetToExcel() {
+            const cols = [
+                { header: 'Store Name', key: 'Retention_lv_3[Last PM Store]' },
+                { header: 'VIN', key: 'Retention_lv_3[VIN]' },
+                { header: 'Retention LV3', key: 'Retention_lv_3[Retention LV3]' },
+                { header: 'Next PM', key: 'Retention_lv_3[Next PM]' }
+            ];
+            exportToSheet(currentFilteredRetData, 'Retention_Raw_Data', cols);
+        }
+
+        function exportToSheet(data, prefix, cols) {
+            if (!data.length) return;
+
+            const formattedData = data.map(r => {
+                let rowObj = {};
+                cols.forEach(c => {
+                    let v = (c.key === 'Report Month')
+                        ? formatReportMonth(getVal(r, 'Date[Date]'))
+                        : getVal(r, c.key);
+                    if (typeof v === 'number' && !Number.isInteger(v)) v = Number(v.toFixed(2));
+                    rowObj[c.header] = (v !== null && v !== undefined) ? v : '';
+                });
+                return rowObj;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(formattedData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "RawData");
             const s = document.getElementById('storeFilter').value.replace(/[^a-z0-9]/gi, '_') || "All";
             XLSX.writeFile(wb, `${prefix}_${s}_${dateStr}.xlsx`);
         }

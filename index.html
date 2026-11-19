@@ -144,12 +144,22 @@
         .filter-group select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 13px; min-width: 130px; outline: none; background: #fff; cursor: pointer; }
         .filter-group select:focus { border-color: var(--gwm-red); }
 
+        .reset-filter-btn {
+            padding: 8px 14px; background-color: var(--bg-light); color: var(--text-dark);
+            border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-weight: bold;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s;
+            margin-left: auto;
+        }
+        .reset-filter-btn:hover { background-color: var(--gwm-red); color: white; border-color: var(--gwm-red); }
+
         /* ============================
            KPI Boxes (Executive Colors)
         ============================ */
         .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .kpi-box { background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px; transition: transform 0.2s; }
+        .kpi-box { background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px; transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
         .kpi-box:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
+        .kpi-box.clickable { cursor: pointer; }
+        .kpi-box.clickable:hover { border-color: var(--gwm-red); box-shadow: 0 6px 14px rgba(144, 12, 63, 0.12); }
         
         .kpi-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
         .kpi-icon.primary { background: #fde8ec; color: var(--gwm-red); } 
@@ -238,6 +248,7 @@
             .filter-section { flex-direction: column; align-items: stretch; position: static; box-shadow: none; border: none; background: transparent; padding: 0; margin-bottom: 20px; }
             .filter-group { flex-direction: column; align-items: flex-start; gap: 5px; }
             .filter-group select { width: 100%; }
+            .reset-filter-btn { width: 100%; justify-content: center; margin-left: 0; }
             .kpi-container { grid-template-columns: 1fr; }
             .kpi-box { width: 100%; box-sizing: border-box; }
         }
@@ -348,34 +359,37 @@
                     <label for="monthFilter"><i class="far fa-calendar"></i> Month:</label>
                     <select id="monthFilter"><option value="">-- All Months --</option></select>
                 </div>
+                <button type="button" class="reset-filter-btn" onclick="resetFilters()" title="ล้างตัวกรองทั้งหมด">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
             </div>
 
             <!-- TAB 0: Summary -->
             <div id="section-summary" class="tab-section active">
                 <h3 id="summaryTitle" style="margin-top:0; margin-bottom: 20px; color: var(--gwm-dark); border-bottom: 2px solid var(--gwm-red); display: inline-block; padding-bottom: 5px;">Overall Performance Summary</h3>
                 <div class="kpi-container">
-                    <div class="kpi-box">
+                    <div class="kpi-box clickable" onclick="switchTab('csi')" title="คลิกเพื่อดูรายละเอียด CSI Score">
                         <div class="kpi-icon primary"><i class="fas fa-smile"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Avg CSI Score</div>
                             <div class="kpi-val-primary" id="kpiSumCSI">--%</div>
                         </div>
                     </div>
-                    <div class="kpi-box">
+                    <div class="kpi-box clickable" onclick="switchTab('csi')" title="คลิกเพื่อดูรายละเอียด NPS Score">
                         <div class="kpi-icon success"><i class="fas fa-heart"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Avg NPS Score</div>
                             <div class="kpi-val-success" id="kpiSumNPS">--%</div>
                         </div>
                     </div>
-                    <div class="kpi-box">
+                    <div class="kpi-box clickable" onclick="switchTab('bp-csi')" title="คลิกเพื่อดูรายละเอียด BP CSI Score">
                         <div class="kpi-icon primary" style="background:#fde8ec; color:#900C3F;"><i class="fas fa-paint-roller"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Avg BP CSI Score</div>
                             <div class="kpi-val-primary" id="kpiSumBpCSI">--%</div>
                         </div>
                     </div>
-                    <div class="kpi-box">
+                    <div class="kpi-box clickable" onclick="switchTab('bp-csi')" title="คลิกเพื่อดูรายละเอียด BP NPS Score">
                         <div class="kpi-icon success"><i class="fas fa-heart"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Avg BP NPS Score</div>
@@ -385,28 +399,28 @@
                 </div>
                 
                 <div class="kpi-container">
-                    <div class="kpi-box">
+                    <div class="kpi-box clickable" onclick="switchTab('part')" title="คลิกเพื่อดูรายละเอียด Part Purchase">
                         <div class="kpi-icon info"><i class="fas fa-boxes"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Part Purchase (THB)</div>
                             <div class="kpi-val-info" id="kpiSumPart">--</div>
                         </div>
                     </div>
-                    <div class="kpi-box">
+                    <div class="kpi-box clickable" onclick="switchTab('accessory')" title="คลิกเพื่อดูรายละเอียด Acc Purchase">
                         <div class="kpi-icon warning"><i class="fas fa-gem"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Acc Purchase (THB)</div>
                             <div class="kpi-val-warning" id="kpiSumAcc">--</div>
                         </div>
                     </div>
-                    <div class="kpi-box">
+                    <div class="kpi-box clickable" onclick="switchTab('repair')" title="คลิกเพื่อดูรายละเอียด Repair Order">
                         <div class="kpi-icon neutral"><i class="fas fa-wrench"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Total Repair Order</div>
                             <div class="kpi-val-neutral" id="kpiSumRO">--</div>
                         </div>
                     </div>
-                    <div class="kpi-box">
+                    <div class="kpi-box clickable" onclick="switchTab('retention')" title="คลิกเพื่อดูรายละเอียด Retention Rate">
                         <div class="kpi-icon success"><i class="fas fa-user-check"></i></div>
                         <div class="kpi-content">
                             <div class="kpi-title">Retention Rate (Yes)</div>
@@ -740,10 +754,12 @@
         function switchTab(tabId, event) {
             if (event) event.preventDefault();
             document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
-            document.querySelector(`.sidebar-menu li[data-tab="${tabId}"]`).classList.add('active');
+            const activeLi = document.querySelector(`.sidebar-menu li[data-tab="${tabId}"]`);
+            if (activeLi) activeLi.classList.add('active');
             
             document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
-            document.getElementById(`section-${tabId}`).classList.add('active');
+            const activeSec = document.getElementById(`section-${tabId}`);
+            if (activeSec) activeSec.classList.add('active');
 
             const titles = { 
                 'summary': 'Overall Summary', 'csi': 'CSI Report', 'bp-csi': 'BP CSI Report', 
@@ -754,12 +770,37 @@
             document.getElementById('pageTitle').textContent = titles[tabId] || 'Report';
 
             if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
         }
 
         // ==========================================
-        // SMART FILTER LOGIC (Dependent Dropdown)
+        // SMART FILTER LOGIC (Dependent Dropdown + Reset)
         // ==========================================
+        function resetFilters() {
+            if (isAdmin) {
+                document.getElementById('storeFilter').value = "";
+            }
+            const yearSelect = document.getElementById('yearFilter');
+            if (yearSelect.options.length > 1) {
+                yearSelect.value = yearSelect.options[1].value; // คืนค่าเป็นปีล่าสุด
+            } else {
+                yearSelect.value = "";
+            }
+            document.getElementById('quarterFilter').value = "";
+            
+            const mSelect = document.getElementById('monthFilter');
+            mSelect.innerHTML = '<option value="">-- All Months --</option>';
+            if (window.availableMonths) {
+                window.availableMonths.forEach(m => {
+                    mSelect.innerHTML += `<option value="${m}">${m}</option>`;
+                });
+            }
+            mSelect.value = "";
+
+            updateDashboard();
+        }
+
         document.getElementById('quarterFilter').addEventListener('change', function() {
             const q = this.value;
             const mSelect = document.getElementById('monthFilter');

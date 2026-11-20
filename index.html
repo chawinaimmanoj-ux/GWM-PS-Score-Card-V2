@@ -34,6 +34,11 @@
             --exec-green: #27AE60;
             --exec-orange: #D35400;
             --exec-grey: #7F8C8D;
+
+            /* Revenue Chart Colors */
+            --rev-part: #118DFF;
+            --rev-labor: #12239E;
+            --rev-other: #E66C37;
         }
         body {
             font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -155,7 +160,7 @@
         /* ============================
            KPI Boxes (Executive Colors)
         ============================ */
-        .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .kpi-box { background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 15px; transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; }
         .kpi-box:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
         .kpi-box.clickable { cursor: pointer; }
@@ -175,6 +180,77 @@
         .kpi-val-info { color: var(--exec-blue); font-size: 28px; font-weight: bold; }
         .kpi-val-warning { color: var(--exec-orange); font-size: 28px; font-weight: bold; }
         .kpi-val-neutral { color: var(--gwm-dark); font-size: 28px; font-weight: bold; }
+
+        /* ============================
+           Revenue Tab Custom Layout
+        ============================ */
+        .rev-top-grid {
+            display: grid;
+            grid-template-columns: 160px 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+            align-items: stretch;
+        }
+        .rev-ro-card {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .rev-ro-card .rev-ro-label { font-size: 14px; font-weight: 600; color: var(--text-dark); line-height: 1.3; margin-bottom: 8px; }
+        .rev-ro-card .rev-ro-val { font-size: 28px; font-weight: bold; color: var(--gwm-dark); }
+
+        .rev-group-box {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px 16px 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        .rev-group-header {
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--gwm-dark);
+            border: 1px solid #999;
+            padding: 6px 10px;
+            margin-bottom: 12px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+        .rev-metrics-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            text-align: center;
+            flex-grow: 1;
+            align-items: center;
+        }
+        .rev-metric-item .rev-m-label { font-size: 11px; font-weight: 600; margin-bottom: 6px; line-height: 1.2; }
+        .rev-metric-item .rev-m-val { font-size: 20px; font-weight: bold; }
+        .rev-c-ttl { color: var(--gwm-dark); }
+        .rev-c-part { color: var(--rev-part); }
+        .rev-c-labor { color: var(--rev-labor); }
+        .rev-c-other { color: var(--rev-other); }
+
+        .rev-bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 2.2fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .rev-chart-title {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--gwm-dark);
+        }
 
         .chart-container { height: 380px; width: 100%; margin-bottom: 40px; position: relative; background: var(--surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-sizing: border-box; }
         canvas { cursor: pointer; } 
@@ -232,6 +308,10 @@
         /* ============================
            Responsive Design (Mobile/Tablet)
         ============================ */
+        @media (max-width: 1200px) {
+            .rev-top-grid { grid-template-columns: 1fr; }
+            .rev-bottom-grid { grid-template-columns: 1fr; }
+        }
         @media (max-width: 1024px) {
             .bottom-section { grid-template-columns: 1fr; }
             .retention-charts { grid-template-columns: 1fr; }
@@ -251,6 +331,7 @@
             .reset-filter-btn { width: 100%; justify-content: center; margin-left: 0; }
             .kpi-container { grid-template-columns: 1fr; }
             .kpi-box { width: 100%; box-sizing: border-box; }
+            .rev-metrics-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
         }
     </style>
 </head>
@@ -359,6 +440,18 @@
                     <label for="monthFilter"><i class="far fa-calendar"></i> Month:</label>
                     <select id="monthFilter"><option value="">-- All Months --</option></select>
                 </div>
+                <!-- Job Type Filter (แสดงเฉพาะหน้า Revenue) -->
+                <div class="filter-group hidden" id="jobTypeFilterGroup">
+                    <label for="jobTypeFilter"><i class="fas fa-wrench"></i> Job Type:</label>
+                    <select id="jobTypeFilter">
+                        <option value="">-- All Job Types --</option>
+                        <option value="PM">PM</option>
+                        <option value="GR">GR</option>
+                        <option value="WA">WA</option>
+                        <option value="GW">GW</option>
+                        <option value="BCS">BCS</option>
+                    </select>
+                </div>
                 <button type="button" class="reset-filter-btn" onclick="resetFilters()" title="ล้างตัวกรองทั้งหมด">
                     <i class="fas fa-undo"></i> Reset
                 </button>
@@ -396,9 +489,6 @@
                             <div class="kpi-val-success" id="kpiSumBpNPS">--%</div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="kpi-container">
                     <div class="kpi-box clickable" onclick="switchTab('part')" title="คลิกเพื่อดูรายละเอียด Part Purchase">
                         <div class="kpi-icon info"><i class="fas fa-boxes"></i></div>
                         <div class="kpi-content">
@@ -425,6 +515,13 @@
                         <div class="kpi-content">
                             <div class="kpi-title">Retention Rate (Yes)</div>
                             <div class="kpi-val-success" id="kpiSumRetention">--%</div>
+                        </div>
+                    </div>
+                    <div class="kpi-box clickable" onclick="switchTab('revenue')" title="คลิกเพื่อดูรายละเอียด Revenue">
+                        <div class="kpi-icon info"><i class="fas fa-file-invoice-dollar"></i></div>
+                        <div class="kpi-content">
+                            <div class="kpi-title">Revenue per RO (THB)</div>
+                            <div class="kpi-val-info" id="kpiSumRevPerRO">--</div>
                         </div>
                     </div>
                 </div>
@@ -619,9 +716,82 @@
 
             <!-- TAB 6: Revenue -->
             <div id="section-revenue" class="tab-section">
-                <div class="placeholder-box">
-                    <i class="fas fa-laptop-code"></i>
-                    <div>ส่วนเนื้อหา Revenue (อยู่ระหว่างการพัฒนา)</div>
+                <div id="revenueErrorMsg" class="error-banner"></div>
+
+                <!-- Top Summary KPIs -->
+                <div class="rev-top-grid">
+                    <div class="rev-ro-card">
+                        <div class="rev-ro-label">Repair order<br>(YTD)</div>
+                        <div class="rev-ro-val" id="kpiRevRO">--</div>
+                    </div>
+
+                    <div class="rev-group-box">
+                        <div class="rev-group-header">Revenue (YTD)</div>
+                        <div class="rev-metrics-row">
+                            <div class="rev-metric-item">
+                                <div class="rev-m-label rev-c-ttl">TTL Revenue</div>
+                                <div class="rev-m-val rev-c-ttl" id="kpiRevTTL">--</div>
+                            </div>
+                            <div class="rev-metric-item">
+                                <div class="rev-m-label rev-c-part">Part revenue</div>
+                                <div class="rev-m-val rev-c-part" id="kpiRevPart">--</div>
+                            </div>
+                            <div class="rev-metric-item">
+                                <div class="rev-m-label rev-c-labor">Labor revenue</div>
+                                <div class="rev-m-val rev-c-labor" id="kpiRevLabor">--</div>
+                            </div>
+                            <div class="rev-metric-item">
+                                <div class="rev-m-label rev-c-other">Other revenue</div>
+                                <div class="rev-m-val rev-c-other" id="kpiRevOther">--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rev-group-box">
+                        <div class="rev-group-header">Revenue per RO (YTD)</div>
+                        <div class="rev-metrics-row">
+                            <div class="rev-metric-item">
+                                <div class="rev-m-label rev-c-ttl">TTL revenue per RO (THB)</div>
+                                <div class="rev-m-val rev-c-ttl" id="kpiRevPerRoTTL">--</div>
+                            </div>
+                            <div class="rev-metric-item">
+                                <div class="rev-m-label rev-c-part">Part revenue per RO (THB)</div>
+                                <div class="rev-m-val rev-c-part" id="kpiRevPerRoPart">--</div>
+                            </div>
+                            <div class="rev-metric-item">
+                                <div class="rev-m-label rev-c-labor">Labor revenue per RO (THB)</div>
+                                <div class="rev-m-val rev-c-labor" id="kpiRevPerRoLabor">--</div>
+                            </div>
+                            <div class="rev-metric-item">
+                                <div class="rev-m-label rev-c-other">Other revenue per RO (THB)</div>
+                                <div class="rev-m-val rev-c-other" id="kpiRevPerRoOther">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Chart: Partner revenue (MTHB) -->
+                <div class="chart-container" style="height: 400px; margin-bottom: 24px;">
+                    <h3 class="rev-chart-title">Partner revenue (MTHB)</h3>
+                    <div style="position: relative; height: calc(100% - 28px); width: 100%;">
+                        <canvas id="revMonthlyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bottom Charts: Pie + Job revenue per RO -->
+                <div class="rev-bottom-grid">
+                    <div class="chart-container" style="height: 380px; margin-bottom: 0;">
+                        <h3 class="rev-chart-title">Part revenue by type</h3>
+                        <div style="position: relative; height: calc(100% - 28px); width: 100%;">
+                            <canvas id="revPieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container" style="height: 380px; margin-bottom: 0;">
+                        <h3 class="rev-chart-title">Job revenue per RO (THB)</h3>
+                        <div style="position: relative; height: calc(100% - 28px); width: 100%;">
+                            <canvas id="revPerRoChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -640,11 +810,13 @@
 
         let rawSummaryData = [], rawCsiTableData = [], rawPartData = [], rawAccData = [];
         let rawBpCsiData = [], rawBpRawData = [], rawRepairData = [], rawRetentionData = [];
+        let rawRevenueData = [];
         let currentFilteredRawData = [], currentFilteredBpRawData = [], currentFilteredRetData = [];
         
         let csiChartInstance = null, partChartInstance = null, accChartInstance = null;
         let bpCsiChartInstance = null, roChartInstance = null, retentionChartInstance = null;
         let retentionBarChartInstance = null;
+        let revMonthlyChartInstance = null, revPieChartInstance = null, revPerRoChartInstance = null;
 
         // Dynamic Columns variables
         let COL_STORE = 'PS_Information[PS_Store]';
@@ -655,6 +827,7 @@
         let COL_Q = ['[Q1_score]','[Q2_score]','[Q3_score]','[Q4_score]','[Q5_score]','[Q6_score]','[Q7_score]','[Q8_score]'];
 
         const QUARTER_MAP = { "January":"Q1", "February":"Q1", "March":"Q1", "April":"Q2", "May":"Q2", "June":"Q2", "July":"Q3", "August":"Q3", "September":"Q3", "October":"Q4", "November":"Q4", "December":"Q4" };
+        const MONTH_ORDER_MAP = { "January":1,"February":2,"March":3,"April":4,"May":5,"June":6,"July":7,"August":8,"September":9,"October":10,"November":11,"December":12 };
         window.availableMonths = [];
 
         const d = new Date();
@@ -761,6 +934,12 @@
             const activeSec = document.getElementById(`section-${tabId}`);
             if (activeSec) activeSec.classList.add('active');
 
+            // แสดงตัวกรอง Job Type เฉพาะหน้า Revenue
+            const jobTypeGroup = document.getElementById('jobTypeFilterGroup');
+            if (jobTypeGroup) {
+                jobTypeGroup.classList.toggle('hidden', tabId !== 'revenue');
+            }
+
             const titles = { 
                 'summary': 'Overall Summary', 'csi': 'CSI Report', 'bp-csi': 'BP CSI Report', 
                 'part': 'Part Purchase Report', 'accessory': 'Accessory Purchase Report', 
@@ -783,11 +962,12 @@
             }
             const yearSelect = document.getElementById('yearFilter');
             if (yearSelect.options.length > 1) {
-                yearSelect.value = yearSelect.options[1].value; // คืนค่าเป็นปีล่าสุด
+                yearSelect.value = yearSelect.options[1].value;
             } else {
                 yearSelect.value = "";
             }
             document.getElementById('quarterFilter').value = "";
+            document.getElementById('jobTypeFilter').value = "";
             
             const mSelect = document.getElementById('monthFilter');
             mSelect.innerHTML = '<option value="">-- All Months --</option>';
@@ -830,6 +1010,7 @@
 
         document.getElementById('yearFilter').addEventListener('change', updateDashboard);
         document.getElementById('storeFilter').addEventListener('change', updateDashboard);
+        document.getElementById('jobTypeFilter').addEventListener('change', updateDashboard);
 
         // ==========================================
         // CHART DRILL-DOWN LOGIC
@@ -1013,7 +1194,7 @@
         }
 
         // ==========================================
-        // ดึงข้อมูลผ่าน Google Apps Script (ส่ง Token แทนการยิง Power Automate ตรงๆ)
+        // ดึงข้อมูลผ่าน Google Apps Script
         // ==========================================
         async function fetchFromGAS(type, errElementId = null, errMsg = '') {
             try {
@@ -1046,6 +1227,33 @@
             }
         }
 
+        // ==========================================
+        // ดึงข้อมูล Revenue ผ่าน Google Apps Script
+        // ==========================================
+        async function fetchRevenueData() {
+            const rows = await fetchFromGAS('revenue', 'revenueErrorMsg', 'ดึงข้อมูล Revenue ไม่สำเร็จ');
+            if (!rows || rows.length === 0) return [];
+
+            const monthColName = 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Month]';
+            const yearColName = 'LocalDateTable_f4f7a720-66a5-4ed5-b02a-903525bbc4ff[Year]';
+
+            return rows.filter(r => {
+                const isTotal = r['[IsGrandTotalRowTotal]'] ?? r['IsGrandTotalRowTotal'];
+                return isTotal !== true && String(isTotal).toLowerCase() !== 'true';
+            }).map(r => {
+                const mVal = r[monthColName] || getVal(r, 'Month') || '';
+                const yVal = r[yearColName] || getVal(r, 'Year') || '';
+                const mNo = MONTH_ORDER_MAP[formatMonthName(mVal)] || parseInt(getVal(r, 'MonthNo')) || 0;
+                const mStr = mNo > 0 ? String(mNo).padStart(2, '0') : '01';
+                return {
+                    ...r,
+                    _combinedDate: (yVal && mNo > 0) ? `${yVal}-${mStr}-01` : '',
+                    _revMonth: formatMonthName(mVal),
+                    _revYear: String(yVal).trim()
+                };
+            });
+        }
+
         function fetchDashboardData() {
             showLoading();
             Promise.all([
@@ -1056,11 +1264,12 @@
                 fetchFromGAS('bp_csi', 'bpCsiErrorMsg', 'ดึงข้อมูล BP CSI ไม่สำเร็จ').then(d => rawBpCsiData = d),
                 fetchFromGAS('bp_raw').then(d => rawBpRawData = d),
                 fetchFromGAS('repair', 'roErrorMsg', 'ดึงข้อมูล Repair Order ไม่สำเร็จ').then(d => rawRepairData = d),
-                fetchFromGAS('retention', 'retentionErrorMsg', 'ดึงข้อมูล Retention ไม่สำเร็จ').then(d => rawRetentionData = d)
+                fetchFromGAS('retention', 'retentionErrorMsg', 'ดึงข้อมูล Retention ไม่สำเร็จ').then(d => rawRetentionData = d),
+                fetchRevenueData().then(d => rawRevenueData = d)
             ]).then(() => {
                 if (sessionExpiredHandled) return;
                 hideLoading();
-                if (rawSummaryData.length > 0) { initDashboard(); } 
+                if (rawSummaryData.length > 0 || rawRevenueData.length > 0) { initDashboard(); } 
                 else { document.getElementById('displayStoreName').textContent = "ไม่พบข้อมูลสำหรับสาขานี้"; }
             });
         }
@@ -1084,6 +1293,15 @@
                 if (y) yearSet.add(y);
             });
 
+            if (rawRevenueData.length > 0) {
+                let revStoreCol = findColumnKey(rawRevenueData[0], ['Working_hour[Store_Name]', 'Store_Name', 'Store Name', 'Store']);
+                rawRevenueData.forEach(r => {
+                    if (revStoreCol && r[revStoreCol]) storeSet.add(r[revStoreCol]);
+                    if (r._revMonth) monthSet.add(r._revMonth);
+                    if (r._revYear && r._revYear.length === 4) yearSet.add(r._revYear);
+                });
+            }
+
             if(yearSet.size === 0 && rawCsiTableData.length > 0) {
                 rawCsiTableData.forEach(r => { let y = extractYear(r['Arrival Time'] || r['Delivery Time']); if(y) yearSet.add(y); });
             }
@@ -1096,10 +1314,7 @@
             storeDropdown.innerHTML = `<option value="">-- All Partners --</option>`;
             Array.from(storeSet).sort().forEach(opt => storeDropdown.innerHTML += `<option value="${opt}">${opt}</option>`);
             
-            window.availableMonths = Array.from(monthSet).sort((a,b) => {
-                const mOrder = {"January":1,"February":2,"March":3,"April":4,"May":5,"June":6,"July":7,"August":8,"September":9,"October":10,"November":11,"December":12};
-                return mOrder[a] - mOrder[b];
-            });
+            window.availableMonths = Array.from(monthSet).sort((a,b) => (MONTH_ORDER_MAP[a]||99) - (MONTH_ORDER_MAP[b]||99));
 
             monthDropdown.innerHTML = `<option value="">-- All Months --</option>`;
             window.availableMonths.forEach(opt => monthDropdown.innerHTML += `<option value="${opt}">${opt}</option>`);
@@ -1124,6 +1339,7 @@
             const selMonth = document.getElementById('monthFilter').value;
             const selQuarter = document.getElementById('quarterFilter').value;
             const selYear = document.getElementById('yearFilter').value;
+            const selJobType = document.getElementById('jobTypeFilter').value;
 
             document.getElementById('displayStoreName').textContent = selStore || (isAdmin ? "All Partners Overview" : loggedInUser);
             
@@ -1319,6 +1535,319 @@
                 'Retention_lv_3[Retention LV3]', 
                 'Retention_lv_3[Next PM]'
             ]);
+
+            // ---------------- 7. Revenue Report & Summary KPI ----------------
+            let revStoreKey = findColumnKey(rawRevenueData[0]||{}, ['Working_hour[Store_Name]', 'Store_Name', 'Store Name', 'Store']);
+            let revDataAllJobs = applyGlobalFilters(rawRevenueData, revStoreKey, '_revMonth', '_combinedDate', false, false);
+
+            // คำนวณ Revenue per RO สำหรับหน้า Summary (รวมทุก Job Type)
+            let sumRevRO = 0, sumRevTTL = 0;
+            if (revDataAllJobs.length > 0) {
+                const colRO = findColumnKey(revDataAllJobs[0], ['[DistinctCountRepair_Order]', 'DistinctCountRepair_Order']);
+                const colJobPerRo = findColumnKey(revDataAllJobs[0], ['[Job_revenue_per_RO]', 'Job_revenue_per_RO']);
+                revDataAllJobs.forEach(r => {
+                    const ro = parseFloat(colRO ? r[colRO] : getVal(r, 'DistinctCountRepair_Order')) || 0;
+                    const jobPerRo = parseFloat(colJobPerRo ? r[colJobPerRo] : getVal(r, 'Job_revenue_per_RO')) || 0;
+                    sumRevRO += ro;
+                    sumRevTTL += (jobPerRo * ro);
+                });
+            }
+            document.getElementById('kpiSumRevPerRO').textContent = sumRevRO > 0
+                ? (sumRevTTL / sumRevRO).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+                : '-';
+
+            // กรอง Job Type เฉพาะหน้า Revenue
+            let revData = revDataAllJobs;
+            if (selJobType && revData.length > 0) {
+                let revJobKey = findColumnKey(revData[0], ['Repair_type[Job type]', 'Job type', 'Repair_type']);
+                if (revJobKey) {
+                    revData = revData.filter(r => String(r[revJobKey] || '').toUpperCase().includes(selJobType));
+                }
+            }
+            renderRevenue(revData);
+        }
+
+        // ================= Revenue Render Function =================
+        function renderRevenue(data) {
+            let totalRO = 0;
+            let totalTTL = 0, totalPart = 0, totalLabor = 0, totalOther = 0;
+            let monthlyAgg = {};
+
+            if (data && data.length > 0) {
+                const colRO = findColumnKey(data[0], ['[DistinctCountRepair_Order]', 'DistinctCountRepair_Order']);
+                const colJobPerRo = findColumnKey(data[0], ['[Job_revenue_per_RO]', 'Job_revenue_per_RO']);
+                const colPartPerRo = findColumnKey(data[0], ['[Part_revenue_per_RO]', 'Part_revenue_per_RO']);
+                const colLaborPerRo = findColumnKey(data[0], ['[Labor_revenue_per_RO]', 'Labor_revenue_per_RO']);
+                const colOtherPerRo = findColumnKey(data[0], ['[Other_revenue_per_RO]', 'Other_revenue_per_RO']);
+
+                data.forEach(r => {
+                    const ro = parseFloat(colRO ? r[colRO] : getVal(r, 'DistinctCountRepair_Order')) || 0;
+                    const jobPerRo = parseFloat(colJobPerRo ? r[colJobPerRo] : getVal(r, 'Job_revenue_per_RO')) || 0;
+                    const partPerRo = parseFloat(colPartPerRo ? r[colPartPerRo] : getVal(r, 'Part_revenue_per_RO')) || 0;
+                    const laborPerRo = parseFloat(colLaborPerRo ? r[colLaborPerRo] : getVal(r, 'Labor_revenue_per_RO')) || 0;
+                    const otherPerRo = parseFloat(colOtherPerRo ? r[colOtherPerRo] : getVal(r, 'Other_revenue_per_RO')) || 0;
+
+                    const ttlRev = jobPerRo * ro;
+                    const partRev = partPerRo * ro;
+                    const laborRev = laborPerRo * ro;
+                    const otherRev = otherPerRo * ro;
+
+                    totalRO += ro;
+                    totalTTL += ttlRev;
+                    totalPart += partRev;
+                    totalLabor += laborRev;
+                    totalOther += otherRev;
+
+                    const m = r._revMonth;
+                    if (m) {
+                        if (!monthlyAgg[m]) {
+                            monthlyAgg[m] = { ro: 0, ttl: 0, part: 0, labor: 0, other: 0, order: MONTH_ORDER_MAP[m] || 99 };
+                        }
+                        monthlyAgg[m].ro += ro;
+                        monthlyAgg[m].ttl += ttlRev;
+                        monthlyAgg[m].part += partRev;
+                        monthlyAgg[m].labor += laborRev;
+                        monthlyAgg[m].other += otherRev;
+                    }
+                });
+            }
+
+            // อัปเดต KPI Cards ด้านบน
+            const fmtM = v => (v / 1000000).toFixed(2) + 'M';
+            const fmtPerRo = v => v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+            document.getElementById('kpiRevRO').textContent = totalRO > 0 ? Math.round(totalRO).toLocaleString() : '-';
+            document.getElementById('kpiRevTTL').textContent = totalRO > 0 ? fmtM(totalTTL) : '-';
+            document.getElementById('kpiRevPart').textContent = totalRO > 0 ? fmtM(totalPart) : '-';
+            document.getElementById('kpiRevLabor').textContent = totalRO > 0 ? fmtM(totalLabor) : '-';
+            document.getElementById('kpiRevOther').textContent = totalRO > 0 ? fmtM(totalOther) : '-';
+
+            document.getElementById('kpiRevPerRoTTL').textContent = totalRO > 0 ? fmtPerRo(totalTTL / totalRO) : '-';
+            document.getElementById('kpiRevPerRoPart').textContent = totalRO > 0 ? fmtPerRo(totalPart / totalRO) : '-';
+            document.getElementById('kpiRevPerRoLabor').textContent = totalRO > 0 ? fmtPerRo(totalLabor / totalRO) : '-';
+            document.getElementById('kpiRevPerRoOther').textContent = totalRO > 0 ? fmtPerRo(totalOther / totalRO) : '-';
+
+            const sortedMonths = Object.keys(monthlyAgg).sort((a, b) => monthlyAgg[a].order - monthlyAgg[b].order);
+
+            // 1. กราฟ Partner revenue (MTHB)
+            const ctxMonthly = document.getElementById('revMonthlyChart').getContext('2d');
+            if (revMonthlyChartInstance) revMonthlyChartInstance.destroy();
+            revMonthlyChartInstance = new Chart(ctxMonthly, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'TTL revenue',
+                            data: sortedMonths.map(m => monthlyAgg[m].ttl / 1000000),
+                            borderColor: '#1A1A1A',
+                            backgroundColor: '#1A1A1A',
+                            borderWidth: 2.5,
+                            pointRadius: 4,
+                            tension: 0.1,
+                            order: 0,
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'end',
+                                offset: 4,
+                                color: '#1A1A1A',
+                                font: { weight: 'bold', size: 11 },
+                                formatter: v => v > 0 ? v.toFixed(2) + 'M' : ''
+                            }
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Part revenue',
+                            data: sortedMonths.map(m => monthlyAgg[m].part / 1000000),
+                            backgroundColor: '#118DFF',
+                            borderRadius: 2,
+                            order: 1,
+                            datalabels: {
+                                align: 'end',
+                                anchor: 'end',
+                                color: '#118DFF',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: v => v > 0 ? v.toFixed(2) + 'M' : ''
+                            }
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Labor revenue',
+                            data: sortedMonths.map(m => monthlyAgg[m].labor / 1000000),
+                            backgroundColor: '#12239E',
+                            borderRadius: 2,
+                            order: 2,
+                            datalabels: {
+                                align: 'end',
+                                anchor: 'end',
+                                color: '#12239E',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: v => v > 0 ? v.toFixed(2) + 'M' : ''
+                            }
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Other item revenue',
+                            data: sortedMonths.map(m => monthlyAgg[m].other / 1000000),
+                            backgroundColor: '#E66C37',
+                            borderRadius: 2,
+                            order: 3,
+                            datalabels: {
+                                align: 'end',
+                                anchor: 'end',
+                                color: '#E66C37',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: v => v > 0 ? v.toFixed(2) + 'M' : ''
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: function(e, elements) { handleChartClick(e, elements, this); },
+                    plugins: {
+                        legend: { position: 'top', align: 'start', labels: { usePointStyle: true, boxWidth: 8, font: { size: 12 } } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grace: '15%',
+                            ticks: { callback: v => v + 'M' },
+                            title: { display: true, text: 'Partner revenue', font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+
+            // 2. กราฟวงกลม Part revenue by type
+            const ctxPie = document.getElementById('revPieChart').getContext('2d');
+            if (revPieChartInstance) revPieChartInstance.destroy();
+            revPieChartInstance = new Chart(ctxPie, {
+                type: 'pie',
+                data: {
+                    labels: ['Parts', 'Labor', 'Other'],
+                    datasets: [{
+                        data: [totalPart / 1000000, totalLabor / 1000000, totalOther / 1000000],
+                        backgroundColor: ['#118DFF', '#12239E', '#E66C37'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10, font: { size: 12 } } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: { weight: 'bold', size: 12 },
+                            textAlign: 'center',
+                            formatter: (value, ctx) => {
+                                const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                if (!sum || value <= 0) return '';
+                                const pct = ((value / sum) * 100).toFixed(2);
+                                if (parseFloat(pct) < 3) return '';
+                                return `${value.toFixed(2)}M\n(${pct}%)`;
+                            },
+                            textShadowBlur: 4,
+                            textShadowColor: 'rgba(0,0,0,0.6)'
+                        }
+                    }
+                }
+            });
+
+            // 3. กราฟ Job revenue per RO (THB)
+            const ctxPerRo = document.getElementById('revPerRoChart').getContext('2d');
+            if (revPerRoChartInstance) revPerRoChartInstance.destroy();
+            revPerRoChartInstance = new Chart(ctxPerRo, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: 'TTL revenue per RO',
+                            data: sortedMonths.map(m => monthlyAgg[m].ro > 0 ? monthlyAgg[m].ttl / monthlyAgg[m].ro : 0),
+                            borderColor: '#1A1A1A',
+                            backgroundColor: '#1A1A1A',
+                            borderWidth: 2.5,
+                            pointRadius: 4,
+                            tension: 0.1,
+                            order: 0,
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'end',
+                                offset: 4,
+                                color: '#1A1A1A',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: v => v > 0 ? v.toFixed(1) : ''
+                            }
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Part revenue per RO',
+                            data: sortedMonths.map(m => monthlyAgg[m].ro > 0 ? monthlyAgg[m].part / monthlyAgg[m].ro : 0),
+                            backgroundColor: '#118DFF',
+                            borderRadius: 2,
+                            order: 1,
+                            datalabels: {
+                                align: 'end',
+                                anchor: 'end',
+                                color: '#118DFF',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: v => v > 0 ? v.toFixed(1) : ''
+                            }
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Labor revenue per RO',
+                            data: sortedMonths.map(m => monthlyAgg[m].ro > 0 ? monthlyAgg[m].labor / monthlyAgg[m].ro : 0),
+                            backgroundColor: '#12239E',
+                            borderRadius: 2,
+                            order: 2,
+                            datalabels: {
+                                align: 'end',
+                                anchor: 'end',
+                                color: '#12239E',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: v => v > 0 ? v.toFixed(1) : ''
+                            }
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Other revenue per RO',
+                            data: sortedMonths.map(m => monthlyAgg[m].ro > 0 ? monthlyAgg[m].other / monthlyAgg[m].ro : 0),
+                            backgroundColor: '#E66C37',
+                            borderRadius: 2,
+                            order: 3,
+                            datalabels: {
+                                align: 'end',
+                                anchor: 'end',
+                                color: '#E66C37',
+                                font: { weight: 'bold', size: 10 },
+                                formatter: v => v > 0 ? v.toFixed(1) : ''
+                            }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: function(e, elements) { handleChartClick(e, elements, this); },
+                    plugins: {
+                        legend: { position: 'top', align: 'start', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grace: '15%',
+                            ticks: { callback: v => v >= 1000 ? (v / 1000) + 'K' : v },
+                            title: { display: true, text: 'Revenue per RO', font: { size: 12 } }
+                        }
+                    }
+                }
+            });
         }
 
         // ================= Common Chart/Table Functions =================
@@ -1330,7 +1859,6 @@
 
         function drawChart(data, canvasId, chartInst, setInst, colorBar, colorLine, isBp = false) {
             if(chartInst) chartInst.destroy();
-            const MONTH_ORDER = {"January":1,"February":2,"March":3,"April":4,"May":5,"June":6,"July":7,"August":8,"September":9,"October":10,"November":11,"December":12};
             
             let mKey = isBp ? findColumnKey(data[0]||{},['Date[Date]','month', 'Date']) : COL_MONTH;
             let csiKey = isBp ? findColumnKey(data[0]||{},['TTL_BP_CSI_Score', 'CSI']) : COL_CSI;
@@ -1339,7 +1867,7 @@
             let agg = {};
             data.forEach(r => {
                 let m = formatMonthName(r[mKey]); if(!m) return;
-                if(!agg[m]) agg[m] = { csiSum:0, npsSum:0, count:0, order: MONTH_ORDER[m]||99 };
+                if(!agg[m]) agg[m] = { csiSum:0, npsSum:0, count:0, order: MONTH_ORDER_MAP[m]||99 };
                 let c = parseFloat(getVal(r, csiKey)), n = parseFloat(getVal(r, npsKey));
                 if(!isNaN(c)) agg[m].csiSum+=c; if(!isNaN(n)) agg[m].npsSum+=n;
                 agg[m].count++;
@@ -1810,12 +2338,11 @@
             renderRank(topId, ranks.slice(0, 5)); 
             renderRank(botId, ranks.slice().reverse().slice(0, 5));
 
-            const MONTH_ORDER = {"January":1,"February":2,"March":3,"April":4,"May":5,"June":6,"July":7,"August":8,"September":9,"October":10,"November":11,"December":12};
             let mAgg = {};
             
             localData.forEach(r => {
                 let m = formatMonthName(r[mCol]); if(!m) return;
-                if(!mAgg[m]) mAgg[m] = { order: MONTH_ORDER[m]||99, c:0, q:Array(qCols.length).fill(0), csi:0, nps:0 };
+                if(!mAgg[m]) mAgg[m] = { order: MONTH_ORDER_MAP[m]||99, c:0, q:Array(qCols.length).fill(0), csi:0, nps:0 };
                 
                 qCols.forEach((q,i) => { 
                     let v = parseFloat(getVal(r, q)); 
@@ -1847,14 +2374,14 @@
             let cCol = findColumnKey(data[0]||{},['DistinctCountRepair_Order', 'Count', 'Total']);
             let mCol = findColumnKey(data[0]||{},['Date', 'Date[Date]', 'month']);
             
-            let sum=0, p=0, g=0, w=0, gw=0, b=0;
+            let p=0, g=0, w=0, gw=0, b=0;
             const MONTH_ORDER = {"January":0,"February":1,"March":2,"April":3,"May":4,"June":5,"July":6,"August":7,"September":8,"October":9,"November":10,"December":11};
             
             let tData = { 'PM':Array(12).fill(0), 'GR':Array(12).fill(0), 'WA':Array(12).fill(0), 'GW':Array(12).fill(0), 'BCS':Array(12).fill(0) };
             let monthly = Array(12).fill(0);
 
             data.forEach(r => {
-                let c = parseInt(r[cCol])||0; sum+=c;
+                let c = parseInt(r[cCol])||0;
                 let j = String(r[jCol]||'').toUpperCase();
                 let mRaw = r[mCol];
                 let mIdx = -1;
@@ -1872,6 +2399,9 @@
                 
                 if(key && mIdx>=0 && mIdx<=11) { tData[key][mIdx]+=c; monthly[mIdx]+=c; }
             });
+
+            let sum = p + g + w + gw + b;
+
             document.getElementById('kpiSumRO').textContent = sum.toLocaleString(); document.getElementById('kpiRoTotal').textContent = sum.toLocaleString();
             document.getElementById('kpiRoPM').textContent = p.toLocaleString(); document.getElementById('kpiRoGR').textContent = g.toLocaleString();
             document.getElementById('kpiRoWA').textContent = w.toLocaleString(); document.getElementById('kpiRoGW').textContent = gw.toLocaleString();
